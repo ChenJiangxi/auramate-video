@@ -88,6 +88,7 @@ ffmpeg -i final.mp4 -vf "select='not(mod(n,90))',scale=360:-1,tile=4x3" \
 
 ```bash
 lib/verify-output.sh <成片.mp4> --expect-w 1080 --expect-h 1920 --fps 30 --min-dur 55 --max-dur 95
+/usr/bin/python3 lib/check-compliance.py --project .    # 口播稿 + caption.txt 都过一遍
 ```
 
 再人工确认（机器判断不了的）：
@@ -98,7 +99,10 @@ lib/verify-output.sh <成片.mp4> --expect-w 1080 --expect-h 1920 --fps 30 --min
 [ ] 数字全是真值
 [ ] 网址 / 品牌名正确
 [ ] 配音情绪对不对 —— 这条只能人类听
+[ ] 合规三问：没承诺玄学结果 / 没替代医疗投资决策 / 拿掉产品后这是科普或情绪内容
 ```
+
+合规 linter 只查词，查不了语义 —— **最终判断在人**。详见 `skills/compliance-redlines/`。
 
 ---
 

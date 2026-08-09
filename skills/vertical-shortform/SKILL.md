@@ -5,7 +5,8 @@ description: 竖版短视频（抖音/小红书 1080×1920，60–90s）的完�
 
 # vertical-shortform — 竖版短视频完整管线
 
-这是主干 skill。90% 的片子走这条路。先读 `skills/video-master/SKILL.md` 的硬规矩，再回来执行。
+这是主干 skill。90% 的片子走这条路。先读 `skills/video-master/SKILL.md` 的**合规红线 + 硬规矩**，再回来执行。
+命理 / 玄学题材另外必读 `skills/compliance-redlines/`。
 
 **输出规格**：1080×1920 / 30fps / yuv420p / H.264 CRF 19 / AAC 192k / `+faststart`
 
@@ -56,6 +57,9 @@ lib/init-project.sh <project-dir>
 
 **选题→功能必须对得上。** 讲财运就落财运报告，不是随手一个别的功能。这条被专门挑过。
 
+**命理 / 玄学题材：选题定了先过合规。** 这条片子必须落在「技术框 / 文化框 / 产品框 / 心理框」
+其中之一，不能滑向「提供占卜服务」。判定标准和词表见 `skills/compliance-redlines/`。
+
 ---
 
 ## 阶段 ② 脚本 → `clips.json`
@@ -77,7 +81,13 @@ lib/init-project.sh <project-dir>
 - 第一句就是钩子，具体到人物+动作+数字。
 - 最后一句收品牌，别超过 15 字。
 
-写完自查字数：
+**写完先过合规闸门**（有 BLOCK 就别往下做，改完再跑）：
+
+```bash
+/usr/bin/python3 lib/check-compliance.py --project .
+```
+
+再自查字数：
 
 ```bash
 python3 -c "
@@ -263,6 +273,7 @@ lib/burn-subs.sh <slug>-nosub.mp4 <slug>-v1.mp4
 见 `skills/delivery/`。
 
 ```bash
+/usr/bin/python3 lib/check-compliance.py --project .   # 交付前再跑一次，文案也要过
 lib/package-delivery.sh --video <slug>-v3.mp4 --cover cover.png --caption caption.txt \
                         --out "<选题名>-v3-交付包.zip"
 ```
@@ -272,6 +283,7 @@ lib/package-delivery.sh --video <slug>-v3.mp4 --cover cover.png --caption captio
 ## 一条片子的完整 checklist
 
 ```
+[ ] 合规 linter 无 BLOCK（口播稿定稿时 + 交付前各一次）
 [ ] topic.md 写了钩子 / 为什么能火 / 落到什么功能
 [ ] clips.json 字数对得上目标时长，无 "ta"，单句 ≤30 字
 [ ] 镜头表列全，每句都有画面来源

@@ -33,11 +33,25 @@
 - [x] `examples/hello-vertical/` 零 key 可跑样例
 - [x] `SECRETS-CHECKLIST.md`
 
+### ✅ Run 1.5 — 合规红线（2026-08-10，Jessy 现场提出，插队做）
+
+- [x] `skills/compliance-redlines/` —— 一句话原则「宣扬封建迷信必违规；讲 AI 算命、
+      讲产品功能不违规」+ 七类必删 + 高风险清单 + 四个安全表达框（技术/文化/产品/心理）
+      + 逐词替换表 + 交付前三问
+- [x] `lib/check-compliance.py` —— BLOCK / WARN / INFO 三档 linter，扫 clips.json +
+      topic.md + caption.txt，有 BLOCK 退出码 1
+- [x] `tests/fixtures/compliance-{bad,good}/` + validate.sh 断言（违规样本必须被拦、
+      合规样本不许误报、样例工程自身必须合规）
+- [x] 接进主干：video-master §3 合规红线（优先级高于硬规矩）、vertical-shortform
+      阶段①②⑧ 三处闸门、delivery 交付前检查、README
+
 ### Run 2 — 选题与脚本（这是最缺的一环）
 
 - [ ] 新 skill `skills/topic-and-script/`：选题公式、钩子模板库、
       「点破用户隐秘行为」批量选题法、脚本节奏（3 拍讲清一个故事）、
       字数↔时长换算、镜头表模板、常见废稿特征
+- [ ] 选题阶段就把「四个安全表达框」当成模板，而不是事后靠 linter 补救
+- [ ] 合规安全选题库：技术框 / 文化框 / 产品框 / 心理框各 10 个可直接开做的选题
 - [ ] `lib/check-script.py`：机械检查 clips.json（字数/单句长度/"ta"/钩子具体性/句数）
 - [ ] 把 `examples/hello-vertical/topic.md` 补成真样例
 
@@ -84,6 +98,7 @@
 | Run | 日期 | validate.sh | 端到端渲染 | 备注 |
 |---|---|---|---|---|
 | 1 | 2026-08-10 | ✅ OK | ✅ 1080×1920 / 11.35s / h264+aac / 30fps | 见下方 Run 1 自测记录 |
+| 1.5 | 2026-08-10 | ✅ OK | ✅ 同上（未回归） | 合规 linter 三项断言全过；历史真实口播稿回测无误报 |
 
 ### Run 1 自测记录（2026-08-10 03:2x）
 
@@ -107,6 +122,17 @@
    `zipfile`（自动置位），实测 `ditto` 解压中文名正常。
 4. `package-delivery.sh` 默认输出落在当前工作目录而不是成片旁边 —— 从别处调用会把 zip 丢错地方。已改。
 5. `build-vertical.sh` 用了 `mapfile`（bash 4+），macOS 自带 bash 3.2 跑不了。已换 while-read。
+
+### Run 1.5 自测记录（合规）
+
+- `validate.sh` 新增三条断言全过：违规样本命中 8 条 BLOCK 被拦下（exit 1）、
+  合规样本零误报（exit 0）、样例工程 `hello-vertical` 自身合规。
+- **拿真实历史成片回测**（这才是词表有没有用的真检验）：
+  `xuanxue-loop/clips.json`（AI 考命理）和 `deliver-tijian2/文案.txt`（命理体检 × 中医，
+  医疗风险最高的一条）都是 **0 BLOCK / 0 WARN** —— 词表对真实内容没有误报。
+- **回测发现的真问题**：过去的口播稿**基本没有框定话术**（xuanxue-loop 那条完全没有）。
+  也就是说以前全靠选题本身安全，没有主动把结果定性为「参考 / 自我觉察 / 传统文化说法」。
+  这条已写进 skill，linter 现在会以 INFO 提醒。
 
 **已知不足（下一轮处理）**
 

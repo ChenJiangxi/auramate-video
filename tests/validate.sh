@@ -116,6 +116,25 @@ while IFS= read -r f; do
   node --check "$f" 2>/dev/null && ok "$(basename "$f")" || bad "$f node 语法错误"
 done < <(find lib -name '*.mjs' -o -name '*.js' 2>/dev/null | sort)
 
+# ---------------------------------------------------------------- 3.5
+sec "合规 linter"
+if /usr/bin/python3 lib/check-compliance.py --project tests/fixtures/compliance-bad >/tmp/av-cbad.log 2>&1; then
+  bad "违规样本没被拦住（应 exit 1）"
+else
+  n=$(grep -c 'BLOCK \[' /tmp/av-cbad.log || true)
+  [ "$n" -ge 6 ] && ok "违规样本被拦下，命中 $n 条 BLOCK" || bad "违规样本只命中 $n 条 BLOCK，词表可能被改坏"
+fi
+if /usr/bin/python3 lib/check-compliance.py --project tests/fixtures/compliance-good >/tmp/av-cgood.log 2>&1; then
+  ok "合规样本放行（无误报）"
+else
+  bad "合规样本被误报"; sed -n '1,20p' /tmp/av-cgood.log
+fi
+if /usr/bin/python3 lib/check-compliance.py --project examples/hello-vertical >/tmp/av-cex.log 2>&1; then
+  ok "样例工程 hello-vertical 合规通过"
+else
+  bad "样例工程自己就不合规"; sed -n '1,20p' /tmp/av-cex.log
+fi
+
 # ---------------------------------------------------------------- 4
 if [ "$SKIP_RENDER" = 1 ]; then
   sec "端到端渲染（已跳过 --skip-render）"

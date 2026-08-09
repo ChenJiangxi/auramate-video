@@ -33,7 +33,8 @@ cat skills/video-master/SKILL.md
 
 | 路径 | 是什么 |
 |---|---|
-| `skills/video-master/` | **总纲**。硬规矩 + 选题路由 + 8 阶段管线 + 验收清单。**先读这个。** |
+| `skills/video-master/` | **总纲**。合规红线 + 硬规矩 + 选题路由 + 8 阶段管线 + 验收清单。**先读这个。** |
+| `skills/compliance-redlines/` | **合规红线**。命理/玄学题材的违规边界、词表、安全表达框架。优先级最高 |
 | `skills/vertical-shortform/` | 竖版短视频（抖音 / 小红书，1080×1920，60–90s）完整管线 |
 | `skills/real-clip-mashup/` | 真人切片混剪：yt-dlp 扒真实素材 → 竖版化 → 混剪 |
 | `skills/product-demo/` | 产品录屏演示：Playwright 录屏 → 裁切放大 → 浏览器壳包装 |
@@ -43,7 +44,7 @@ cat skills/video-master/SKILL.md
 | `skills/cover-thumbnail/` | 封面：爆款风巨字 + 戏剧图 + 副标 |
 | `skills/delivery/` | 交付：唯一文件名 + zip + 故事板图 + faststart |
 | `skills/ffmpeg-cookbook/` | ffmpeg 配方库：竖版化、zoompan、concat、mux、探测 |
-| `lib/` | 可直接复制到项目里跑的脚本模板（build / 配音 / 字幕 / 封面 / 探测） |
+| `lib/` | 可直接复制到项目里跑的脚本模板（build / 配音 / 字幕 / 封面 / 合规 / 探测） |
 | `examples/` | 最小可跑样例，不需要任何 API key |
 | `tests/validate.sh` | 自检：frontmatter、死链、脚本可执行、样例能出片 |
 | `SECRETS-CHECKLIST.md` | **需要人类通过 prompt 传入的密钥清单**（repo 内只有占位符，无真值） |
@@ -79,6 +80,10 @@ cat skills/video-master/SKILL.md
    自己画图（渲染）可以，自己编数字绝不。
 3. **交付前留人类审核点。** 配音够不够有情绪、创意对不对味，agent 判断不了。
    工作流的作用是让人类的判断执行得飞快，不是取代它。
+
+还有一条优先级更高的前置条件：**合规**。
+宣扬封建迷信必违规；讲 AI 算命、讲产品功能不违规。做命理题材前先读
+`skills/compliance-redlines/`，并对每条片子跑 `lib/check-compliance.py`。
 
 ---
 
