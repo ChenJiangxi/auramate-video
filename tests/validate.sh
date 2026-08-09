@@ -151,6 +151,63 @@ fi
 rm -rf "$FX"
 fi
 
+# ---------------------------------------------------------------- 3.35
+if [ "$SKIP_RENDER" = 1 ]; then
+  sec "产品录屏工具（已跳过 --skip-render）"
+else
+sec "产品录屏工具"
+PX="$ROOT/tests/fixtures/pd"; rm -rf "$PX"; mkdir -p "$PX"
+# 假录屏：中间一列内容 + 两侧黑边（模拟真实录屏的居中列）
+ffmpeg -nostdin -y -v error -f lavfi -i "color=c=black:s=1440x2560:r=30:d=6" \
+  -f lavfi -i "testsrc2=size=900x2000:rate=30:duration=6" \
+  -filter_complex "[0:v][1:v]overlay=(W-w)/2:(H-h)/2" \
+  -c:v libx264 -crf 24 -pix_fmt yuv420p "$PX/rec.mp4" 2>/dev/null
+
+if /usr/bin/python3 "$ROOT/lib/browser-chrome.py" --url example.com --path " / app" \
+     --out "$PX/chrome.png" --w 1920 --h 120 >/tmp/av-chrome.log 2>&1; then
+  cw=$(ffprobe -v error -select_streams v:0 -show_entries stream=width -of csv=p=0 "$PX/chrome.png")
+  ch=$(ffprobe -v error -select_streams v:0 -show_entries stream=height -of csv=p=0 "$PX/chrome.png")
+  [ "$cw" = 1920 ] && [ "$ch" = 120 ] && ok "browser-chrome 出图 ${cw}×${ch}" || bad "chrome 尺寸 ${cw}×${ch}"
+else bad "browser-chrome.py 失败"; sed -n '1,10p' /tmp/av-chrome.log; fi
+
+for m in "--auto" "--zoom 1.5 --cy 0.45" "--crop 900:1600:270:400"; do
+  o="$PX/zc.mp4"
+  if "$ROOT/lib/zoom-crop.sh" "$PX/rec.mp4" "$o" --dur 2 --ss 1 $m >/tmp/av-zc.log 2>&1; then
+    w=$(ffprobe -v error -select_streams v:0 -show_entries stream=width  -of csv=p=0 "$o")
+    h=$(ffprobe -v error -select_streams v:0 -show_entries stream=height -of csv=p=0 "$o")
+    a=$(ffprobe -v error -select_streams a:0 -show_entries stream=codec_name -of csv=p=0 "$o")
+    [ "$w" = 1080 ] && [ "$h" = 1920 ] && [ -z "$a" ] \
+      && ok "zoom-crop ${m} → 1080×1920 无音轨" || bad "zoom-crop ${m} → ${w}×${h} audio=${a:-none}"
+  else bad "zoom-crop ${m} 失败"; sed -n '1,8p' /tmp/av-zc.log; fi
+done
+# --auto 在满帧素材上必须明确提示「没黑边可裁」
+ffmpeg -nostdin -y -v error -f lavfi -i "testsrc2=size=720x1280:rate=30:duration=4" \
+  -c:v libx264 -crf 24 -pix_fmt yuv420p "$PX/full.mp4" 2>/dev/null
+"$ROOT/lib/zoom-crop.sh" "$PX/full.mp4" "$PX/zc2.mp4" --dur 2 --auto >/tmp/av-zc2.log 2>&1 || true
+grep -q '没有黑边可裁' /tmp/av-zc2.log && ok "--auto 在满帧素材上给出正确提示" || bad "--auto 提示缺失"
+
+# --grid 出网格样帧
+"$ROOT/lib/zoom-crop.sh" "$PX/rec.mp4" "$PX/g.mp4" --ss 1 --grid >/tmp/av-grid.log 2>&1 \
+  && [ -f "$PX/g.grid.png" ] && ok "--grid 导出网格样帧" || bad "--grid 失败"
+
+if "$ROOT/lib/wrap-chrome.sh" "$PX/rec.mp4" "$PX/wrap.mp4" --chrome "$PX/chrome.png" \
+     --dur 2 --ss 1 >/tmp/av-wrap.log 2>&1; then
+  w=$(ffprobe -v error -select_streams v:0 -show_entries stream=width  -of csv=p=0 "$PX/wrap.mp4")
+  h=$(ffprobe -v error -select_streams v:0 -show_entries stream=height -of csv=p=0 "$PX/wrap.mp4")
+  [ "$w" = 1920 ] && [ "$h" = 1080 ] && ok "wrap-chrome → 1920×1080（壳 120 + 内容 960）" \
+    || bad "wrap-chrome → ${w}×${h}"
+else bad "wrap-chrome 失败"; sed -n '1,10p' /tmp/av-wrap.log; fi
+# 素材不够长：默认必须报错，--freeze 必须补足
+if "$ROOT/lib/wrap-chrome.sh" "$PX/rec.mp4" "$PX/w2.mp4" --chrome "$PX/chrome.png" --dur 20 >/tmp/av-w2.log 2>&1; then
+  bad "素材不够长没被拦住"
+else grep -q '素材不够长' /tmp/av-w2.log && ok "素材不够长被拦下" || bad "报错信息不对"; fi
+if "$ROOT/lib/wrap-chrome.sh" "$PX/rec.mp4" "$PX/w3.mp4" --chrome "$PX/chrome.png" --dur 20 --freeze >/tmp/av-w3.log 2>&1; then
+  d=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$PX/w3.mp4")
+  awk -v d="$d" 'BEGIN{exit !(d>19.5 && d<20.5)}' && ok "--freeze 冻结末帧补到 ${d}s" || bad "--freeze 后时长 ${d}s"
+else bad "--freeze 失败"; sed -n '1,10p' /tmp/av-w3.log; fi
+rm -rf "$PX"
+fi
+
 # ---------------------------------------------------------------- 3.4
 sec "脚本 linter"
 # 真实发过的稿子必须放行（阈值不能严到把已交付内容判成错）

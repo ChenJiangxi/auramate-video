@@ -104,6 +104,15 @@ lib/init-project.sh <project-dir>
 
 三种来源分别跳去：`skills/real-clip-mashup/` · `skills/product-demo/` · `skills/html-motion-cards/`
 
+产品录屏走这几步（**先盘点已有素材，别一上来就开浏览器**）：
+
+```bash
+lib/zoom-crop.sh rec.webm out.mp4 --ss 8 --grid            # 导网格样帧量坐标
+lib/zoom-crop.sh rec.webm work/v05.mp4 --dur 4.2 --ss 6 --zoom 1.5 --cy 0.45
+/usr/bin/python3 lib/browser-chrome.py --url <域名> --path " / <路径>" --out assets/chrome.png
+lib/wrap-chrome.sh rec.mp4 work/v05.mp4 --chrome assets/chrome.png --dur 4.2 --freeze
+```
+
 外部切片走这两步（**体检那步别跳，contact 图必须打开看**）：
 
 ```bash

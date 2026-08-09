@@ -38,7 +38,7 @@ cat skills/video-master/SKILL.md
 | `skills/topic-and-script/` | **选题与脚本**。决定 80% 的那一环：角度库、钩子句式、实测语速、文案模板 |
 | `skills/vertical-shortform/` | 竖版短视频（抖音 / 小红书，1080×1920，60–90s）完整管线 |
 | `skills/real-clip-mashup/` | 真人切片混剪：yt-dlp 扒真实素材 → 竖版化 → 混剪 |
-| `skills/product-demo/` | 产品录屏演示：Playwright 录屏 → 裁切放大 → 浏览器壳包装 |
+| `skills/product-demo/` | 产品录屏演示：素材盘点 → 录屏 → 裁切放大 → 假浏览器壳 |
 | `skills/html-motion-cards/` | HTML/CSS 动效卡：hook 卡、数据卡、封面海报 |
 | `skills/tts-voiceover/` | 配音：MiniMax T2A v2、克隆音 / 系统音色、语速、读音坑 |
 | `skills/subtitles/` | 字幕：PIL overlay（无 libass 环境）+ ASS 两条路 |
