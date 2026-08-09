@@ -1,0 +1,20 @@
+# 渲染中间产物 / 大文件 —— 不进 repo
+work/
+__pycache__/
+node_modules/
+.DS_Store
+
+# examples 的运行产物（make-fixtures.sh 随时能重新生成）
+examples/*/audio/
+examples/*/footage/
+examples/*/subs/
+examples/*/work/
+examples/*/*.mp4
+examples/*/*.webm
+
+# 任何形态的凭据都不该出现在这里，兜底再挡一层
+.env
+.env.*
+*.pem
+*.key
+secrets.json
