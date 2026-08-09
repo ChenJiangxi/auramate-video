@@ -1,0 +1,32 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
+<title>stat-compare</title>
+<!-- 对比卡：左右两个大数字 + 结论。用于「A 对 B」「之前 vs 之后」。
+     data: title leftLabel leftValue leftNote rightLabel rightValue rightNote verdict accent -->
+<link rel="stylesheet" href="_base.css">
+<style>
+  :root { --accent: var(--{{accent}}); }
+  .title { position:absolute; top:300px; left:0; right:0; text-align:center;
+           font-size:var(--fs-lead); font-weight:900; }
+  .cols { position:absolute; top:560px; left:70px; right:70px; display:flex; gap:40px; }
+  .col  { flex:1; text-align:center; padding:56px 24px; border-radius:32px;
+          background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.07); }
+  .lab  { font-size:var(--fs-sub); color:var(--fg-dim); margin-bottom:18px; }
+  .val  { font-family:var(--serif); font-size:var(--fs-huge); font-weight:800; line-height:1; }
+  .note { font-size:var(--fs-note); color:var(--fg-faint); margin-top:22px; }
+  .col.win .val { color:var(--accent);
+                  text-shadow:0 0 50px color-mix(in srgb, var(--accent) 45%, transparent); }
+  .vs { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+        font-family:var(--serif); font-size:64px; color:var(--fg-faint); }
+  .verdict { position:absolute; bottom:420px; left:0; right:0; text-align:center;
+             font-family:var(--serif); font-size:var(--fs-body); font-weight:700; color:var(--fg); padding:0 90px; line-height:1.5; }
+</style></head>
+<body><div class="stage">
+  <div class="glow"></div><div class="stars"></div>
+  <div class="title up d1">{{title}}</div>
+  <div class="cols">
+    <div class="col up d2"><div class="lab">{{leftLabel}}</div><div class="val">{{leftValue}}</div><div class="note">{{leftNote}}</div></div>
+    <div class="col win up d3"><div class="lab">{{rightLabel}}</div><div class="val">{{rightValue}}</div><div class="note">{{rightNote}}</div></div>
+  </div>
+  <div class="verdict fade d5">{{verdict}}</div>
+  <div class="vig"></div>
+</div></body></html>

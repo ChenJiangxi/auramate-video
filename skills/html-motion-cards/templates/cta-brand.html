@@ -1,0 +1,26 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
+<title>cta-brand</title>
+<!-- 收尾品牌卡：品牌名 + 一句定位 + 网址。≤3s。
+     data: brand tagline url accent -->
+<link rel="stylesheet" href="_base.css">
+<style>
+  :root { --accent: var(--{{accent}}); }
+  .wrap { position:absolute; inset:0; display:flex; flex-direction:column;
+          justify-content:center; align-items:center; gap:36px; }
+  .brand { font-family:var(--serif); font-size:var(--fs-huge); font-weight:800;
+           letter-spacing:6px; color:var(--accent);
+           text-shadow:0 0 70px color-mix(in srgb, var(--accent) 45%, transparent); }
+  .tag  { font-size:var(--fs-body); color:var(--fg-dim); letter-spacing:3px; }
+  .url  { margin-top:40px; font-size:var(--fs-sub); letter-spacing:2px; color:var(--fg);
+          padding:20px 52px; border:1.5px solid color-mix(in srgb, var(--accent) 40%, transparent);
+          border-radius:999px; }
+</style></head>
+<body><div class="stage">
+  <div class="glow"></div><div class="stars"></div>
+  <div class="wrap">
+    <div class="brand slam d1">{{brand}}</div>
+    <div class="tag fade d3">{{tagline}}</div>
+    <div class="url fade d4">{{url}}</div>
+  </div>
+  <div class="vig"></div>
+</div></body></html>

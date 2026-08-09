@@ -1,0 +1,33 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
+<title>question</title>
+<!-- 问句 / 共鸣卡：两行叙述 + 一个输入框 + 一行落点。情感题最好使。
+     data: a(第一句) b(第二句) placeholder(输入框里的字) foot(落点句) accent -->
+<link rel="stylesheet" href="_base.css">
+<style>
+  :root { --accent: var(--{{accent}}); }
+  .stage { background: var(--bg-cool); }
+  .top { position:absolute; top:430px; left:0; right:0; text-align:center; padding:0 100px; }
+  .top div { font-size:var(--fs-title); font-weight:700; color:rgba(255,255,255,.9); line-height:1.5; }
+  .top em { font-style:normal; color:rgba(255,255,255,.45); font-weight:400; }
+  /* 用 left/right 居中，不要 transform：.up 动画的 to{transform:none} 会把 translateX(-50%) 干掉，
+     动画一结束框就整体右移 410px（真踩过） */
+  .box { position:absolute; top:52%; left:130px; right:130px;
+         height:130px; background:rgba(255,255,255,.05);
+         border:1.5px solid color-mix(in srgb, var(--accent) 28%, transparent);
+         border-radius:36px; display:flex; align-items:center; padding:0 44px; }
+  .ph  { font-size:46px; color:rgba(255,255,255,.34); }
+  .cur { width:4px; height:56px; background:var(--accent); margin-left:4px;
+         animation:blink 1.1s step-end infinite; }
+  .foot { position:absolute; bottom:520px; left:0; right:0; text-align:center;
+          font-size:var(--fs-body); color:var(--fg-dim); }
+</style></head>
+<body><div class="stage">
+  <div class="glow"></div><div class="stars"></div>
+  <div class="top">
+    <div class="up d1">{{a}}</div>
+    <div class="up d2">{{b}}</div>
+  </div>
+  <div class="box up d4"><span class="ph">{{placeholder}}</span><span class="cur"></span></div>
+  <div class="foot up d6">{{foot}}</div>
+  <div class="vig"></div>
+</div></body></html>

@@ -1,0 +1,53 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
+<title>bar-rank</title>
+<!-- 榜单卡：横向条形图 + 两条参考线 + 底部结论。
+     🔴 数字必须是真跑出来的，绝不自己编（见 skills/video-master H2）。
+     data: title sub verdict verdictHl guessLabel guessAt passLabel passAt accent
+           rows[]: rank name tag value color -->
+<link rel="stylesheet" href="_base.css">
+<style>
+  :root { --accent: var(--{{accent}}); }
+  .title { position:absolute; top:150px; left:0; right:0; text-align:center;
+           font-size:var(--fs-lead); font-weight:900; letter-spacing:1px; }
+  .sub   { position:absolute; top:236px; left:0; right:0; text-align:center;
+           font-size:34px; color:var(--fg-dim); letter-spacing:1px; }
+  .rows  { position:absolute; top:330px; left:70px; right:70px; }
+  .row   { display:flex; align-items:center; height:118px; }
+  .rk    { width:52px; font-size:34px; font-weight:800; color:var(--fg-faint); text-align:center; }
+  .rk.top{ color:var(--accent); }
+  .nm    { width:300px; padding-left:14px; }
+  .nm .m { font-size:38px; font-weight:700; line-height:1.1; }
+  .nm .t { font-size:26px; color:var(--fg-faint); }
+  .track { flex:1; height:60px; position:relative; background:rgba(255,255,255,.05);
+           border-radius:12px; margin:0 20px; }
+  .bar   { position:absolute; left:0; top:0; bottom:0; border-radius:12px;
+           display:flex; align-items:center; justify-content:flex-end; padding-right:16px;
+           font-size:34px; font-weight:800; color:#0a0a0a;
+           animation:grow .8s cubic-bezier(.2,.9,.3,1) both; }
+  /* 参考线：left 用 calc 对齐 track 的起点 —— 70(边距)+372(名字列)+20(margin) */
+  /* 参考线长度 = 行数 × 行高，别写死 bottom；行数少时写死会拖到画面底部 */
+  .refline { position:absolute; top:300px; height:{{rowsH}}px; width:3px; }
+  .reflab  { position:absolute; font-size:28px; font-weight:700; }
+  .guess   { background:repeating-linear-gradient(180deg, rgba(255,255,255,.3) 0 10px, transparent 10px 20px); }
+  .pass    { background:repeating-linear-gradient(180deg, color-mix(in srgb, var(--green) 70%, transparent) 0 12px, transparent 12px 22px); }
+  .verdict { position:absolute; bottom:120px; left:0; right:0; text-align:center;
+             font-family:var(--serif); font-size:56px; font-weight:900; }
+  .verdict .u { color:var(--red); }
+</style></head>
+<body><div class="stage">
+  <div class="glow"></div>
+  <div class="title">{{title}}</div>
+  <div class="sub">{{sub}}</div>
+  <div class="rows">
+<!-- repeat:rows -->
+    <div class="row"><div class="rk {{rkClass}}">{{rank}}</div>
+      <div class="nm"><div class="m">{{name}}</div><div class="t">{{tag}}</div></div>
+      <div class="track"><div class="bar" style="width:{{value}}%;background:{{color}};animation-delay:{{delay}}s">{{value}}</div></div></div>
+<!-- /repeat -->
+  </div>
+  <div class="refline guess" style="left:calc(70px + 372px + 20px + (100% - 140px - 372px - 40px) * {{guessAt}})"></div>
+  <div class="reflab" style="top:calc(330px + {{rowsH}}px + 16px); left:calc(70px + 372px + 20px + (100% - 140px - 372px - 40px) * {{guessAt}} - 60px); color:var(--fg-dim)">{{guessLabel}}</div>
+  <div class="refline pass" style="left:calc(70px + 372px + 20px + (100% - 140px - 372px - 40px) * {{passAt}})"></div>
+  <div class="reflab" style="top:272px; left:calc(70px + 372px + 20px + (100% - 140px - 372px - 40px) * {{passAt}} - 70px); color:var(--green)">{{passLabel}}</div>
+  <div class="verdict fade d4">{{verdict}} <span class="u">{{verdictHl}}</span></div>
+</div></body></html>

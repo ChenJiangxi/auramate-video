@@ -39,7 +39,7 @@ cat skills/video-master/SKILL.md
 | `skills/vertical-shortform/` | 竖版短视频（抖音 / 小红书，1080×1920，60–90s）完整管线 |
 | `skills/real-clip-mashup/` | 真人切片混剪：yt-dlp 扒真实素材 → 竖版化 → 混剪 |
 | `skills/product-demo/` | 产品录屏演示：素材盘点 → 录屏 → 裁切放大 → 假浏览器壳 |
-| `skills/html-motion-cards/` | HTML/CSS 动效卡：hook 卡、数据卡、封面海报 |
+| `skills/html-motion-cards/` | HTML/CSS 动效卡：5 套模板 + 公共设计系统 + storyboard 驱动渲染 |
 | `skills/tts-voiceover/` | 配音：MiniMax T2A v2、克隆音 / 系统音色、语速、读音坑 |
 | `skills/subtitles/` | 字幕：PIL overlay（无 libass 环境）+ ASS 两条路 |
 | `skills/cover-thumbnail/` | 封面：爆款风巨字 + 戏剧图 + 副标 |

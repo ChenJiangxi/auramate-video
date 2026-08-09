@@ -80,11 +80,14 @@
       `--freeze` 冻结末帧
 - [x] **录制分辨率倒推表** —— 裁切倍数和升采样倍数是相乘的，这笔账以前没算清楚
 
-### Run 5 — html-motion-cards 深化
+### ✅ Run 5 — html-motion-cards 深化（2026-08-10）
 
-- [ ] 卡模板库（hook 大字 / 数据卡 / 榜单 / 对比 / CTA）实际 HTML 文件
-- [ ] data-attr 驱动的 storyboard → 自动生成 concat 清单 + 字幕时间戳
-- [ ] `lib/storyboard.js`
+- [x] 5 套模板实文件：`hook-slam` / `question` / `bar-rank` / `stat-compare` / `cta-brand`
+- [x] `_base.css` 公共设计系统：色/字号阶梯/氛围三层（glow→stars→vig）/动画与延时链，
+      从真实交付过的几十张卡抽出来的
+- [x] `lib/storyboard.js`：storyboard.json 填模板 → 渲染 → **直接产出 shots.tsv**，
+      时长默认走 audio-driven（跟 build-vertical 同一套规则，不会漂）；`--no-render` 不需要浏览器
+- [x] 极简模板引擎（`{{key}}` + `<!-- repeat:rows -->`），数组自动派生 `rowsCount`/`rowsH`
 
 ### Run 6 — 质量闸门与自审
 
@@ -115,6 +118,30 @@
 | 2 | 2026-08-10 | ✅ OK | ✅ 1080×1920 / 11.35s / h264+aac / 30fps | 脚本 linter 三项断言全过；回测揪出我自己定错的 3 条规则 |
 | 3 | 2026-08-10 | ✅ OK | ✅ 同上 + fit-vertical 四画幅各出片 | 两个新脚本都在真实素材上跑过；contact 图当场抓出一条带下载广告的素材 |
 | 4 | 2026-08-10 | ✅ OK | ✅ 同上 + 产品录屏工具 9 条断言 | 三个新脚本都在真实录屏上跑过；抽帧目视确认浏览器壳正确 |
+| 5 | 2026-08-10 | ✅ OK | ✅ 同上 + 5 张卡真渲染 1080×1920 | 抽帧目视揪出 2 个模板 bug 并修掉 |
+
+### Run 5 自测记录（动效卡）
+
+**真渲染 + 抽帧目视，不是只跑通**
+
+- 5 套模板各渲一张，全部 1080×1920，`--no-render` 模式也跑通（不依赖浏览器）。
+- `shots.tsv` 5 行，格式直接能喂 `build-vertical.sh`。
+- `validate.sh` 新增「卡模板 / storyboard」4 条断言（模板存在性、占位符无残留、
+  shots.tsv 行数、5 张卡渲染尺寸与时长），全绿。
+
+**抽帧目视揪出 2 个模板 bug（只跑通不看图是发现不了的）**
+
+1. `question` 卡的输入框**动画结束后整体右移 410px**。根因：`.up` 动画的
+   `to { transform: none }` 把 `.box` 的 `translateX(-50%)` 覆盖掉了 ——
+   居中和动画抢同一个 `transform` 属性。改成用 `left/right` 定位。
+   （这个 bug 原样存在于参考的真实卡片里，抄过来才发现。）
+2. `bar-rank` 的参考线高度写死 `bottom:250px`，行数少时会拖到画面底部。
+   改成 `{{rowsH}}`（行数 × 118px），由 `storyboard.js` 自动派生。
+
+**量到的一个有用事实**
+
+playwright 录出来的 webm 比请求的 `dur` **多 0.6–0.9s**（浏览器启停帧）。
+方向是对的 —— 卡永远够长，`build-vertical.sh` 用 `-t` 裁到精确时长，不会黑屏。
 
 ### Run 4 自测记录（产品录屏）
 

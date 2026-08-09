@@ -104,6 +104,12 @@ lib/init-project.sh <project-dir>
 
 三种来源分别跳去：`skills/real-clip-mashup/` · `skills/product-demo/` · `skills/html-motion-cards/`
 
+动效卡走 storyboard（填模板 + 渲染 + 直接产出 shots.tsv，时长自动跟配音对齐）：
+
+```bash
+node lib/storyboard.js --project .        # 读 storyboard.json，渲染到 html/beats/
+```
+
 产品录屏走这几步（**先盘点已有素材，别一上来就开浏览器**）：
 
 ```bash

@@ -1,0 +1,22 @@
+{
+  "accent": "gold",
+  "beats": [
+    {"clip":"c01","template":"hook-slam","dur":2.0,
+     "data":{"l1":"AI 算命","l2":"卷成这样了？","sub":"八字 · 合盘 · 人生K线","ghost":"?"}},
+    {"clip":"c02","template":"question","dur":2.0,
+     "data":{"a":"难受得不行，","b":"翻遍通讯录 <em>却不知道</em>","placeholder":"这条，能发给谁呢…","foot":"于是你打开了另一个对话框。"}},
+    {"clip":"c03","template":"bar-rank","dur":2.0,
+     "data":{"title":"示例榜 · <span class=\"hl\">占位数据</span>","sub":"这里的数字必须是真跑出来的",
+             "guessAt":"0.25","guessLabel":"瞎猜 25","passAt":"0.60","passLabel":"及格 60",
+             "verdict":"最高 40.3 ——","verdictHl":"全部不及格",
+             "rows":[{"rank":1,"name":"Model-A","tag":"Reasoning","value":40.3,"color":"linear-gradient(90deg,#7fd0e0,#6bbcd0)"},
+                     {"rank":2,"name":"Model-B","tag":"Chat","value":36.7,"color":"linear-gradient(90deg,#88a8f0,#7a9ae8)"},
+                     {"rank":3,"name":"Model-C","tag":"Chat","value":32.4,"color":"linear-gradient(90deg,#f08888,#e87878)"}]}},
+    {"clip":"c04","template":"stat-compare","dur":2.0,
+     "data":{"title":"排盘对比","leftLabel":"老版本","leftValue":"3/4","leftNote":"日柱排错一整天",
+             "rightLabel":"新版本","rightValue":"4/4","rightNote":"一字不差",
+             "verdict":"同一家公司、同一个八字，两个模型答案完全不同。"}},
+    {"clip":"c05","template":"cta-brand","dur":2.0,
+     "data":{"brand":"示例品牌","tagline":"一句定位放这里","url":"example.net"}}
+  ]
+}

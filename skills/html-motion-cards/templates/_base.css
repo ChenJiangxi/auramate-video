@@ -1,0 +1,109 @@
+/* _base.css — 竖版 1080×1920 动效卡的公共底座。
+   从真实交付过的几十张卡里抽出来的：固定画布 + 光晕/星点/暗角三层氛围
+   + 一套砸屏/上浮动画。所有模板 @import 这个文件。 */
+
+:root {
+  /* 画布 */
+  --W: 1080px;
+  --H: 1920px;
+
+  /* 底色：三档，越深越「玄」 */
+  --bg:        #08070c;   /* 默认 */
+  --bg-warm:   #0a070c;
+  --bg-cool:   #050509;
+
+  /* 文字 */
+  --fg:        #f2eee6;   /* 主文，不用纯白，纯白刺眼 */
+  --fg-dim:    rgba(242, 238, 230, .5);
+  --fg-faint:  rgba(242, 238, 230, .34);
+
+  /* 强调色 —— 按题材选一个，全片统一 */
+  --gold:      #f0b24a;   /* 知识 / 严肃 / 玄学，默认 */
+  --pink:      #ff86b6;   /* 情感 / 共鸣 */
+  --red:       #ff6b5c;   /* 警示 / 反差结论 */
+  --green:     #78dc8c;   /* 及格线 / 正向 */
+  --accent:    var(--gold);
+
+  /* 字号阶梯（竖版实测可读区间） */
+  --fs-mega:   150px;  /* 砸屏主句，最多 6 字 */
+  --fs-huge:   120px;
+  --fs-big:     96px;  /* 砸屏副句 */
+  --fs-title:   76px;
+  --fs-lead:    62px;  /* 数据卡标题 */
+  --fs-body:    52px;
+  --fs-sub:     38px;
+  --fs-note:    30px;
+
+  --serif: "Songti SC", "STSong", serif;          /* 标题：宋体=分量感 */
+  --sans:  "PingFang SC", "Hiragino Sans GB", "STHeiti", sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  width: var(--W);
+  height: var(--H);
+  overflow: hidden;                 /* 必须：多出来的一像素会在录制里抖 */
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--sans);
+}
+
+.stage {
+  position: relative;
+  width: var(--W);
+  height: var(--H);
+  overflow: hidden;
+}
+
+/* ---- 氛围三层：光晕 → 星点 → 暗角。顺序别反 ---- */
+.glow {
+  position: absolute; left: 50%; top: 44%;
+  width: 150%; height: 76%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(ellipse at 50% 50%,
+              color-mix(in srgb, var(--accent) 16%, transparent), transparent 62%);
+  filter: blur(14px);
+}
+.stars {
+  position: absolute; inset: 0; opacity: .5;
+  background-image:
+    radial-gradient(1.7px 1.7px at 22% 22%, rgba(255,255,255,.42), transparent),
+    radial-gradient(1.5px 1.5px at 76% 18%, rgba(255,255,255,.34), transparent),
+    radial-gradient(1.3px 1.3px at 40% 72%, rgba(255,255,255,.26), transparent),
+    radial-gradient(1.2px 1.2px at 84% 66%, rgba(255,255,255,.22), transparent);
+}
+.vig {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at center, transparent 48%, rgba(0,0,0,.66));
+}
+
+/* ---- 安全区：上下各留 180px，别被平台 UI 压住 ---- */
+.safe { position: absolute; left: 0; right: 0; top: 180px; bottom: 180px; }
+
+/* ---- 动画 ----
+   slam  砸屏：scale 1.4→1，用带回弹的 cubic-bezier，配大字
+   up    上浮：translateY(34px)→0，配成串的短句
+   fadein 单纯淡入，配脚注
+   延时链写在模板里（.d1=.2s .d2=.5s .d3=.8s ...），改一拍不用重算全部 */
+@keyframes slam   { to { opacity: 1; transform: scale(1); } }
+@keyframes up     { from { opacity: 0; transform: translateY(34px); } to { opacity: 1; transform: none; } }
+@keyframes fadein { to { opacity: 1; } }
+@keyframes grow   { from { width: 0; } }
+@keyframes pulse  { 0%, 100% { opacity: .5 } 50% { opacity: 1 } }
+@keyframes blink  { 50% { opacity: 0 } }
+
+.slam { opacity: 0; transform: scale(1.4);
+        animation: slam .45s cubic-bezier(.2, 1.3, .4, 1) forwards; }
+.up   { animation: up .9s both; }
+.fade { opacity: 0; animation: fadein .6s ease forwards; }
+
+.d1 { animation-delay: .20s } .d2 { animation-delay: .50s }
+.d3 { animation-delay: .80s } .d4 { animation-delay: 1.10s }
+.d5 { animation-delay: 1.40s } .d6 { animation-delay: 1.70s }
+
+/* 动画总时长 ≤ 3s。卡渲染 3–5s 就够，多余的后期 trim 掉不影响观感。 */
+
+.center { text-align: center; }
+.serif  { font-family: var(--serif); }
+.hl     { color: var(--accent); }

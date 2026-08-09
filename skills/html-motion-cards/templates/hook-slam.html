@@ -1,0 +1,30 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
+<title>hook-slam</title>
+<!-- 钩子大字卡：两行砸屏 + 一行脚注。全片最多用一次，≤4s。
+     data: l1(上句 ≤8字) l2(强调句 ≤6字) sub(脚注 ≤20字) accent(gold|pink|red) -->
+<link rel="stylesheet" href="_base.css">
+<style>
+  :root { --accent: var(--{{accent}}); }
+  .stage { background: var(--bg-warm); }
+  .wrap { position:absolute; inset:0; display:flex; flex-direction:column;
+          justify-content:center; align-items:center; gap:20px; }
+  .l1 { font-family:var(--serif); font-size:var(--fs-big); font-weight:700; letter-spacing:8px; }
+  .l2 { font-family:var(--serif); font-size:var(--fs-mega); font-weight:800; letter-spacing:4px;
+        color:var(--accent); text-shadow:0 0 60px color-mix(in srgb, var(--accent) 50%, transparent); }
+  .sub { position:absolute; bottom:520px; left:0; right:0; text-align:center;
+         font-size:var(--fs-body); color:var(--fg-dim); letter-spacing:2px; }
+  .ghost { position:absolute; left:50%; top:40%; transform:translate(-50%,-50%);
+           font-family:var(--serif); font-size:1100px; font-weight:700; line-height:1;
+           color:color-mix(in srgb, var(--accent) 6%, transparent);
+           animation:pulse 2s ease-in-out infinite; }
+</style></head>
+<body><div class="stage">
+  <div class="glow"></div><div class="stars"></div>
+  <div class="ghost">{{ghost}}</div>
+  <div class="wrap">
+    <div class="l1 slam d1">{{l1}}</div>
+    <div class="l2 slam d3">{{l2}}</div>
+  </div>
+  <div class="sub fade d5">{{sub}}</div>
+  <div class="vig"></div>
+</div></body></html>

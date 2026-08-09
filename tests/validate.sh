@@ -208,6 +208,48 @@ else bad "--freeze 失败"; sed -n '1,10p' /tmp/av-w3.log; fi
 rm -rf "$PX"
 fi
 
+# ---------------------------------------------------------------- 3.37
+if [ "$SKIP_RENDER" = 1 ]; then
+  sec "卡模板 / storyboard（已跳过 --skip-render）"
+else
+sec "卡模板 / storyboard"
+SX="$ROOT/tests/fixtures/storyboard"
+rm -rf "$SX/work" "$SX/html" "$SX/shots.tsv"
+# 每个模板都要能被 storyboard.json 引到（防模板改名后 fixture 失联）
+missing=""
+for t in $(/usr/bin/env python3 -c '
+import json,sys
+print(" ".join(sorted({b["template"] for b in json.load(open(sys.argv[1]))["beats"]})))' "$SX/storyboard.json"); do
+  [ -f "$ROOT/skills/html-motion-cards/templates/$t.html" ] || missing="$missing $t"
+done
+[ -z "$missing" ] && ok "fixture 引用的模板都存在" || bad "缺模板:$missing"
+
+if node "$ROOT/lib/storyboard.js" --project "$SX" --no-render >/tmp/av-sb0.log 2>&1; then
+  grep -q '还有没填的占位符' /tmp/av-sb0.log && bad "模板有没填的占位符" || ok "模板填充完整（无残留占位符）"
+  [ -f "$SX/shots.tsv" ] && [ "$(wc -l < "$SX/shots.tsv" | tr -d ' ')" = 5 ] \
+    && ok "shots.tsv 5 行，可直接喂 build-vertical" || bad "shots.tsv 行数不对"
+else bad "storyboard --no-render 失败"; sed -n '1,10p' /tmp/av-sb0.log; fi
+
+if node -e "require('playwright')" 2>/dev/null; then
+  if node "$ROOT/lib/storyboard.js" --project "$SX" >/tmp/av-sb1.log 2>&1; then
+    n=0; okn=0
+    for f in "$SX"/html/beats/*.webm; do
+      n=$((n+1))
+      w=$(ffprobe -v error -select_streams v:0 -show_entries stream=width  -of csv=p=0 "$f")
+      h=$(ffprobe -v error -select_streams v:0 -show_entries stream=height -of csv=p=0 "$f")
+      d=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$f")
+      # 卡必须 >= 请求时长，否则 build 时会黑屏
+      [ "$w" = 1080 ] && [ "$h" = 1920 ] && awk -v d="$d" 'BEGIN{exit !(d>=2.0)}' && okn=$((okn+1))
+    done
+    [ "$n" = 5 ] && [ "$okn" = 5 ] && ok "5 张卡全部渲成 1080×1920 且不短于请求时长" \
+      || bad "渲染结果 $okn/$n 合格"
+  else bad "storyboard 渲染失败"; sed -n '1,12p' /tmp/av-sb1.log; fi
+else
+  printf '  ○ 跳过真实渲染（本机没有 playwright）\n'
+fi
+rm -rf "$SX/work" "$SX/html" "$SX/shots.tsv"
+fi
+
 # ---------------------------------------------------------------- 3.4
 sec "脚本 linter"
 # 真实发过的稿子必须放行（阈值不能严到把已交付内容判成错）
