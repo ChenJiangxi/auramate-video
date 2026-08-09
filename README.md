@@ -35,6 +35,7 @@ cat skills/video-master/SKILL.md
 |---|---|
 | `skills/video-master/` | **总纲**。合规红线 + 硬规矩 + 选题路由 + 8 阶段管线 + 验收清单。**先读这个。** |
 | `skills/compliance-redlines/` | **合规红线**。命理/玄学题材的违规边界、词表、安全表达框架。优先级最高 |
+| `skills/topic-and-script/` | **选题与脚本**。决定 80% 的那一环：角度库、钩子句式、实测语速、文案模板 |
 | `skills/vertical-shortform/` | 竖版短视频（抖音 / 小红书，1080×1920，60–90s）完整管线 |
 | `skills/real-clip-mashup/` | 真人切片混剪：yt-dlp 扒真实素材 → 竖版化 → 混剪 |
 | `skills/product-demo/` | 产品录屏演示：Playwright 录屏 → 裁切放大 → 浏览器壳包装 |
@@ -46,7 +47,8 @@ cat skills/video-master/SKILL.md
 | `skills/ffmpeg-cookbook/` | ffmpeg 配方库：竖版化、zoompan、concat、mux、探测 |
 | `lib/` | 可直接复制到项目里跑的脚本模板（build / 配音 / 字幕 / 封面 / 合规 / 探测） |
 | `examples/` | 最小可跑样例，不需要任何 API key |
-| `tests/validate.sh` | 自检：frontmatter、死链、脚本可执行、样例能出片 |
+| `references/` | 长文参考：B 站横版长视频、平台文案模板 |
+| `tests/validate.sh` | 自检：frontmatter、死链、脚本/合规 linter、样例能出片 |
 | `SECRETS-CHECKLIST.md` | **需要人类通过 prompt 传入的密钥清单**（repo 内只有占位符，无真值） |
 
 ---

@@ -116,6 +116,27 @@ while IFS= read -r f; do
   node --check "$f" 2>/dev/null && ok "$(basename "$f")" || bad "$f node 语法错误"
 done < <(find lib -name '*.mjs' -o -name '*.js' 2>/dev/null | sort)
 
+# ---------------------------------------------------------------- 3.4
+sec "脚本 linter"
+# 真实发过的稿子必须放行（阈值不能严到把已交付内容判成错）
+REAL=/Users/macmini003/ops-bilibili/projects/xuanxue-loop/clips.json
+if [ -f "$REAL" ]; then
+  if /usr/bin/python3 lib/check-script.py --clips "$REAL" --target 40-60 >/tmp/av-sreal.log 2>&1; then
+    ok "真实交付稿放行（阈值没有过严）"
+  else bad "真实交付稿被判硬错误 —— 阈值过严"; grep '✗' /tmp/av-sreal.log; fi
+else
+  printf '  ○ 跳过真实稿回归（本机没有 %s）\n' "$REAL"
+fi
+if /usr/bin/python3 lib/check-script.py --project tests/fixtures/script-bad --target 40-60 >/tmp/av-sbad.log 2>&1; then
+  bad "坏稿没被拦住（应 exit 1）"
+else
+  grep -q 'ta' /tmp/av-sbad.log && grep -q '超过 15s' /tmp/av-sbad.log \
+    && ok "坏稿被拦下（ta + 超长拍都命中）" || { bad "坏稿命中项不对"; grep '✗' /tmp/av-sbad.log; }
+fi
+if /usr/bin/python3 lib/check-script.py --project examples/hello-vertical --target 5-30 >/tmp/av-sex.log 2>&1; then
+  ok "样例工程脚本通过"
+else bad "样例工程脚本有硬错误"; grep '✗' /tmp/av-sex.log; fi
+
 # ---------------------------------------------------------------- 3.5
 sec "合规 linter"
 if /usr/bin/python3 lib/check-compliance.py --project tests/fixtures/compliance-bad >/tmp/av-cbad.log 2>&1; then

@@ -75,30 +75,21 @@ lib/init-project.sh <project-dir>
 规矩：
 
 - 一句 = 一个镜头 = 一段配音。**别把两个画面塞进一句。**
-- 单句 ≤ 30 字。长句 TTS 会喘不上气，字幕也放不下。
-- 总字数 ≈ 目标时长 × 5（@1.28 倍速）。75s ≈ 375 字。
+- 单句理想 ≤ 30 字，但真约束是**一拍别超过 ~10s**（实测值）。长句只要句内标点够就没问题。
+- 总字数 ≈ 目标时长 × **6.35**（presenter_male@1.30，含标点）。60s ≈ 380 字。
+  克隆音 @1.10 是 4.98 字/秒。估算只到 ±10%，配完音要 ffprobe 复核。
 - 写 `他/她`，不写 `ta`（TTS 会念字母）。
 - 第一句就是钩子，具体到人物+动作+数字。
 - 最后一句收品牌，别超过 15 字。
 
-**写完先过合规闸门**（有 BLOCK 就别往下做，改完再跑）：
+**写完跑两道闸门**（有硬错误/BLOCK 就别往下做）：
 
 ```bash
+/usr/bin/python3 lib/check-script.py     --project . --target 40-60
 /usr/bin/python3 lib/check-compliance.py --project .
 ```
 
-再自查字数：
-
-```bash
-python3 -c "
-import json,sys
-c=json.load(open('clips.json'))
-t=sum(len(x['text']) for x in c)
-print(f'{len(c)} 句 / {t} 字 / 预估 {t/5:.0f}s @1.28x')
-for x in c:
-    if len(x['text'])>30: print('  ⚠ 过长:', x['name'], len(x['text']), '字')
-"
-```
+选题和写法见 `skills/topic-and-script/`。
 
 ---
 
