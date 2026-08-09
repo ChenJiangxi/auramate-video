@@ -45,7 +45,7 @@ cat skills/video-master/SKILL.md
 | `skills/cover-thumbnail/` | 封面：爆款风巨字 + 戏剧图 + 副标 |
 | `skills/delivery/` | 交付：唯一文件名 + zip + 故事板图 + faststart |
 | `skills/ffmpeg-cookbook/` | ffmpeg 配方库：竖版化、zoompan、concat、mux、探测 |
-| `lib/` | 可直接复制到项目里跑的脚本模板（build / 配音 / 字幕 / 封面 / 合规 / 探测） |
+| `lib/` | 可直接复制到项目里跑的脚本模板（扒素材 / 竖版化 / build / 配音 / 字幕 / 封面 / 合规 / 探测） |
 | `examples/` | 最小可跑样例，不需要任何 API key |
 | `references/` | 长文参考：B 站横版长视频、平台文案模板 |
 | `tests/validate.sh` | 自检：frontmatter、死链、脚本/合规 linter、样例能出片 |

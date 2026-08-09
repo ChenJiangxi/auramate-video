@@ -104,7 +104,17 @@ lib/init-project.sh <project-dir>
 
 三种来源分别跳去：`skills/real-clip-mashup/` · `skills/product-demo/` · `skills/html-motion-cards/`
 
+外部切片走这两步（**体检那步别跳，contact 图必须打开看**）：
+
+```bash
+lib/fetch-clip.sh search "关键词" -n 8
+lib/fetch-clip.sh get <url> -o footage/ext/x.mp4     # 默认强制 h264
+lib/fetch-clip.sh probe footage/ext/x.mp4 --need 4.2 # 抽 9 帧拼图看水印/构图/挑起始点
+lib/fit-vertical.sh footage/ext/x.mp4 work/v03.mp4 --dur 4.2 --ss 12
+```
+
 **素材长度必须 ≥ 对应配音时长**，不然那一拍会黑屏。不够长就放慢（`setpts`），别切别的画面凑。
+`fit-vertical.sh` 会直接拦住并告诉你还差几秒。
 
 ---
 

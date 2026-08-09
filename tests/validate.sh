@@ -116,6 +116,41 @@ while IFS= read -r f; do
   node --check "$f" 2>/dev/null && ok "$(basename "$f")" || bad "$f node 语法错误"
 done < <(find lib -name '*.mjs' -o -name '*.js' 2>/dev/null | sort)
 
+# ---------------------------------------------------------------- 3.3
+if [ "$SKIP_RENDER" = 1 ]; then
+  sec "fit-vertical（已跳过 --skip-render）"
+else
+sec "fit-vertical 各画幅"
+FX="$ROOT/tests/fixtures/fit"; rm -rf "$FX"; mkdir -p "$FX"
+# 造出真实素材库里出现过的几类画幅：FHD 16:9 / 低清 16:9 / 4:3 / 竖版 9:16
+for spec in "1920x1080 fhd" "640x360 low169" "640x480 r43" "360x640 vert"; do
+  set -- $spec
+  ffmpeg -nostdin -y -v error -f lavfi -i "testsrc2=size=$1:rate=30:duration=6" \
+    -c:v libx264 -crf 24 -pix_fmt yuv420p "$FX/$2.mp4" 2>/dev/null
+done
+fitfail=0
+for n in fhd low169 r43 vert; do
+  if "$ROOT/lib/fit-vertical.sh" "$FX/$n.mp4" "$FX/out-$n.mp4" --dur 2 --ss 1 >/tmp/av-fit-$n.log 2>&1; then
+    w=$(ffprobe -v error -select_streams v:0 -show_entries stream=width  -of csv=p=0 "$FX/out-$n.mp4")
+    h=$(ffprobe -v error -select_streams v:0 -show_entries stream=height -of csv=p=0 "$FX/out-$n.mp4")
+    d=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$FX/out-$n.mp4")
+    a=$(ffprobe -v error -select_streams a:0 -show_entries stream=codec_name -of csv=p=0 "$FX/out-$n.mp4")
+    m=$(awk '/mode=/{print $1}' /tmp/av-fit-$n.log | head -1)
+    if [ "$w" = 1080 ] && [ "$h" = 1920 ] && [ -z "$a" ] \
+       && awk -v d="$d" 'BEGIN{exit !(d>1.8 && d<2.2)}'; then
+      ok "$n → 1080×1920 / ${d}s / 无音轨 / $(sed -n 's/.*\(mode=[a-z]*\).*/\1/p' /tmp/av-fit-$n.log | head -1)"
+    else bad "$n → ${w}×${h} / ${d}s / audio=${a:-none}"; fitfail=1; fi
+  else bad "$n fit-vertical 失败"; sed -n '1,10p' /tmp/av-fit-$n.log; fitfail=1; fi
+done
+# 素材不够长必须被拦住（这是最常见的翻车）
+if "$ROOT/lib/fit-vertical.sh" "$FX/fhd.mp4" "$FX/out-toolong.mp4" --dur 30 >/tmp/av-fit-long.log 2>&1; then
+  bad "素材不够长没被拦住"
+else
+  grep -q '素材不够长' /tmp/av-fit-long.log && ok "素材不够长被拦下并给出还差多少" || bad "报错信息不对"
+fi
+rm -rf "$FX"
+fi
+
 # ---------------------------------------------------------------- 3.4
 sec "脚本 linter"
 # 真实发过的稿子必须放行（阈值不能严到把已交付内容判成错）
