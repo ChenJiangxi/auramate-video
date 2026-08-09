@@ -87,9 +87,10 @@ ffmpeg -i final.mp4 -vf "select='not(mod(n,90))',scale=360:-1,tile=4x3" \
 ## 六、交付前最后一遍
 
 ```bash
-lib/verify-output.sh <成片.mp4> --expect-w 1080 --expect-h 1920 --fps 30 --min-dur 55 --max-dur 95
-/usr/bin/python3 lib/check-compliance.py --project .    # 口播稿 + caption.txt 都过一遍
+lib/audit-video.sh --project . --video <成片.mp4> --target 40-60   # 八项机械检查一次跑完
 ```
+
+见 `skills/quality-gate/`。
 
 再人工确认（机器判断不了的）：
 

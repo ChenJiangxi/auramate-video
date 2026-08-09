@@ -39,10 +39,17 @@ done
 [ -n "$PROJECT" ] || { echo "need --project <dir>" >&2; exit 2; }
 PROJECT="$(cd "$PROJECT" && pwd)"
 [ -f "$PROJECT/clips.json" ] || { echo "missing $PROJECT/clips.json" >&2; exit 2; }
-case "$SHOTS" in /*) ;; *) SHOTS="$PROJECT/$SHOTS";; esac
+# --shots：先按当前工作目录解，解不到再按项目目录解（默认值 shots.tsv 指的是项目内）
+case "$SHOTS" in
+  /*) ;;
+  *) if [ -f "$PWD/$SHOTS" ]; then SHOTS="$PWD/$SHOTS"; else SHOTS="$PROJECT/$SHOTS"; fi;;
+esac
 [ -f "$SHOTS" ] || { echo "missing shots file: $SHOTS" >&2; exit 2; }
+# --out：相对路径按**当前工作目录**解，这是 CLI 的常规语义。
+# （曾经错误地按项目目录解 → 从 repo 根传 examples/x/out.mp4 会拼成
+#   examples/x/examples/x/out.mp4，ffmpeg 报 No such file or directory）
 [ -n "$OUT" ] || OUT="$PROJECT/out-nosub.mp4"
-case "$OUT" in /*) ;; *) OUT="$PROJECT/$OUT";; esac
+case "$OUT" in /*) ;; *) OUT="$PWD/$OUT";; esac
 
 FF=${FF:-ffmpeg}; FP=${FP:-ffprobe}
 command -v "$FF" >/dev/null || { echo "ffmpeg not found" >&2; exit 3; }

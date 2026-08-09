@@ -309,6 +309,12 @@ else
     ok "build-vertical 出片"
   else bad "build-vertical 失败"; sed -n '1,30p' /tmp/av-build.log; fi
 
+  # 相对 --out 必须按当前工作目录解（曾经按项目目录解，会拼成 a/b/a/b/out.mp4）
+  ( cd "$ROOT" && "$ROOT/lib/build-vertical.sh" --project examples/hello-vertical \
+      --out examples/hello-vertical/relout.mp4 >/tmp/av-relout.log 2>&1 )
+  [ -f "$EX/relout.mp4" ] && { ok "相对 --out 按 cwd 解析（不会重复拼项目路径）"; rm -f "$EX/relout.mp4"; } \
+    || { bad "相对 --out 解析错"; sed -n '1,6p' /tmp/av-relout.log; }
+
   if /usr/bin/python3 "$ROOT/lib/gen-subs.py" --project "$EX" >/tmp/av-subs.log 2>&1; then
     n=$(wc -l < "$EX/subs/manifest.tsv" | tr -d ' ')
     ok "gen-subs 生成 $n 行字幕"
@@ -326,6 +332,23 @@ else
     a=$(ffprobe -v error -show_entries format=size -of csv=p=0 "$EX/hello-nosub.mp4")
     b=$(ffprobe -v error -show_entries format=size -of csv=p=0 "$EX/hello-v1.mp4")
     [ "$a" != "$b" ] && ok "带字幕版与无字幕版产物不同（字幕确实烧上了）" || bad "带字幕版与无字幕版字节数相同，字幕可能没生效"
+
+    # ---- 质量闸门 ----
+    cp "$EX/hello-v1.mp4" "$EX/hello-demo-v1.mp4"
+    if "$ROOT/lib/audit-video.sh" --project "$EX" --video "$EX/hello-demo-v1.mp4" \
+         --target 5-30 >/tmp/av-audit.log 2>&1; then
+      grep -q '^  画面构成:' /tmp/av-audit.log && ok "audit 通过，画面构成 $(grep -m1 '^  画面构成:' /tmp/av-audit.log | sed 's/^  画面构成: //')" \
+        || bad "audit 没统计画面构成"
+      grep -q '只有人能判的' /tmp/av-audit.log && ok "audit 输出了人工清单（没把它当成已通过）" || bad "audit 缺人工清单"
+    else bad "audit 在样例工程上失败"; sed -n '1,40p' /tmp/av-audit.log; fi
+    # 坏成片必须被拦：分辨率不对
+    ffmpeg -nostdin -y -v error -f lavfi -i "testsrc2=size=640x360:rate=30:duration=6" \
+      -f lavfi -i "sine=frequency=300:duration=6" -c:v libx264 -crf 28 -pix_fmt yuv420p \
+      -c:a aac -shortest "$EX/bad-v1.mp4" 2>/dev/null
+    if "$ROOT/lib/audit-video.sh" --project "$EX" --video "$EX/bad-v1.mp4" --target 5-30 >/tmp/av-audit2.log 2>&1; then
+      bad "坏成片（640×360）没被 audit 拦住"
+    else ok "坏成片被 audit 拦下"; fi
+    rm -f "$EX/hello-demo-v1.mp4" "$EX/bad-v1.mp4"
   fi
 fi
 fi

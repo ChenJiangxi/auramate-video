@@ -43,6 +43,7 @@ cat skills/video-master/SKILL.md
 | `skills/tts-voiceover/` | 配音：MiniMax T2A v2、克隆音 / 系统音色、语速、读音坑 |
 | `skills/subtitles/` | 字幕：PIL overlay（无 libass 环境）+ ASS 两条路 |
 | `skills/cover-thumbnail/` | 封面：爆款风巨字 + 戏剧图 + 副标 |
+| `skills/quality-gate/` | **交付前质量闸门**：一条命令跑完机械检查 + 17 条真实被打回案例 |
 | `skills/delivery/` | 交付：唯一文件名 + zip + 故事板图 + faststart |
 | `skills/ffmpeg-cookbook/` | ffmpeg 配方库：竖版化、zoompan、concat、mux、探测 |
 | `lib/` | 可直接复制到项目里跑的脚本模板（扒素材 / 竖版化 / build / 配音 / 字幕 / 封面 / 合规 / 探测） |

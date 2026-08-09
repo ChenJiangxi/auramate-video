@@ -7,6 +7,7 @@ node_modules/
 # examples 的运行产物（make-fixtures.sh 随时能重新生成）
 examples/*/audio/
 examples/*/footage/
+examples/*/html/
 examples/*/subs/
 examples/*/work/
 examples/*/*.mp4

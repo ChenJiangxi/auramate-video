@@ -12,6 +12,13 @@ cd examples/hello-vertical
 /usr/bin/python3 ../../lib/gen-subs.py --project .  # 字幕 PNG + manifest
 ../../lib/burn-subs.sh hello-nosub.mp4 hello-v1.mp4 --manifest subs/manifest.tsv
 ../../lib/verify-output.sh hello-v1.mp4 --expect-w 1080 --expect-h 1920 --fps 30
+../../lib/audit-video.sh --project . --video hello-v1.mp4 --target 5-30   # 八项机械检查
+```
+
+素材按目录约定摆（`audit-video.sh` 按这个统计画面构成占比）：
+
+```
+footage/ext/  真实切片      footage/rec/  产品录屏      html/beats/  卡片
 ```
 
 `tests/validate.sh` 会自动跑上面全套。
@@ -31,5 +38,5 @@ cd examples/hello-vertical
 
 1. `clips.json` 改成真口播稿（单句 ≤30 字，写「他/她」不写「ta」）
 2. `lib/gen-voice.mjs` 生成真配音覆盖 `audio/`
-3. `footage/` 换成真实切片（`skills/real-clip-mashup/`）或产品录屏（`skills/product-demo/`）
+3. `footage/ext/` 换成真实切片（`skills/real-clip-mashup/`）、`footage/rec/` 换成产品录屏（`skills/product-demo/`）
 4. `shots.tsv` 里的起始秒重新量（`ffmpeg -ss N -i src.mp4 -frames:v 1 /tmp/probe.png` 看图取点）

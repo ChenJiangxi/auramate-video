@@ -251,11 +251,15 @@ tts-voiceover  →  subtitles  →  ffmpeg-cookbook  →  cover-thumbnail  →  
 [ ] 交付包 = 视频 + 封面 + 文案 + 故事板图，打成 zip
 ```
 
-自动跑一遍前 4 条：
+机器能判的一条命令跑完：
 
 ```bash
-lib/verify-output.sh <成片.mp4> --expect-w 1080 --expect-h 1920 --min-dur 55 --max-dur 95
+lib/audit-video.sh --project <工程> --video <成片.mp4> --target 40-60
 ```
+
+它会把「机器判过的」和「只有人能判的」分开列。**机器项全过 ≠ 能发** ——
+历史上被打回的版本绝大多数栽在人工那一列。完整流程和被打回案例库见
+`skills/quality-gate/`。
 
 ---
 
