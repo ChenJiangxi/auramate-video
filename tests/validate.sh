@@ -301,7 +301,7 @@ fi
 if [ "$SKIP_RENDER" = 1 ] || ! node -e "require('playwright')" 2>/dev/null; then
   sec "README demo（已跳过：--skip-render 或无 playwright）"
 else
-sec "README demo 可复现（照 README 上的命令原样跑）"
+sec "卡模板预览片可复现（README 里那段命令原样跑）"
 DV="$ROOT/examples/demo-vertical"
 rm -rf "$DV/audio" "$DV/html" "$DV/work" "$DV/subs" "$DV"/demo-*.mp4
 if "$ROOT/lib/make-placeholders.sh" "$DV" >/tmp/av-dv0.log 2>&1 \
@@ -318,7 +318,7 @@ if "$ROOT/lib/make-placeholders.sh" "$DV" >/tmp/av-dv0.log 2>&1 \
   grep -q '还短' /tmp/av-dv1.log && bad "有卡比这一拍短 —— 加大 storyboard.js --margin" \
     || ok "5 张卡都不短于对应拍长"
   if "$ROOT/lib/audit-video.sh" --project "$DV" --video "$DV/demo-v1.mp4" --target 15-30 >/tmp/av-dv5.log 2>&1; then
-    ok "demo 过审计（README 里引用的输出仍然成立）"
+    ok "模板预览片过审计（README 里引用的输出仍然成立）"
   else bad "demo 没过审计"; grep '✗' /tmp/av-dv5.log | sed 's/^/    /'; fi
 else
   bad "README 上的 demo 命令跑不通了"

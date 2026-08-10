@@ -12,46 +12,61 @@
 
 ## Demo
 
-下面这条 21 秒的竖版片，是**用这个 repo 本身做出来的**——没有手改一帧，
-5 个镜头全部由 skill 里的卡模板渲染，字幕由脚本按配音时长算，
-最后过了自带的 8 项审计。
+**成片（点开看）→ [`docs/demo/demo.mp4`](docs/demo/demo.mp4)** · 54.6s · 1080×1920 · 真配音
 
 ![demo](docs/demo/demo.gif)
 
 ![storyboard](docs/demo/storyboard.png)
 
-<sub>1080×1920 / 21.2s / h264 + aac / 30fps。榜单那一拍的数字是**真实交付过的 6 条成片时长**，
-不是编的——这个 repo 的规矩之一就是数字必须可追溯。</sub>
+这条不是拿模板凑的演示片，是**照着一条真实交付过的选题（「AI 考中国命理」）
+用这个 repo 的脚本重新跑出来的**：真配音（`presenter_male`）、真产品录屏、
+真实测数据，字幕按每句配音时长算。
 
-### 自己复现（每条命令都能直接跑）
+镜头构成（`shots.tsv` 九行，就是这么写的）：
+
+| 拍 | 类型 | 画面 |
+|---|---|---|
+| c01 | 外部录屏切片 | 大模型排八字的真实输出 |
+| c02–c04 | 数据卡 | 命理大赛真题实测榜（**真跑的分数**，不是编的） |
+| c05 | 产品录屏 + 补丁 | 命盘页，地址栏 PIL 打补丁盖成 `auramate.net`，套浏览器壳 |
+| c06 | 产品录屏 | 专业报告（日主 / 五行 / 喜用神） |
+| c07–c08 | 产品录屏 | AWAKE 态灵体 + 功能页 |
+| c09 | 产品录屏 | 灵体流式对话收尾 |
+
+> **卡片只占 3 拍，其余全是真实画面**——这是这个 repo 的硬规矩之一：
+> 卡只能当标题 / 数据展示，**不许整片都是卡**（`skills/video-master/` H1）。
+
+### 顺手发现了原片的一个 bug
+
+用 repo 的脚本重跑这条选题时，`build-vertical.sh` 直接报警：
+
+```
+⚠ c02 实际 6.37s ≠ 目标 10.29s（素材可能比这拍短）
+⚠ c03 实际 6.37s ≠ 目标 7.80s（素材可能比这拍短）
+```
+
+榜单卡只渲了 6.36s，而这两拍分别需要 10.29s 和 7.80s。视频轨因此比音频轨短，
+`-shortest` 把音频尾巴截掉了——**已交付的那一版成片 48.10s，而 9 段配音总长 52.31s，
+有 4.2 秒配音没进片子**（收尾那句品牌词被砍掉大半）。
+
+把榜单卡冻末帧延长到 12s 之后重建，成片 54.57s，音视频都完整。
+这类问题肉眼很难发现，但机器一量就出来——这就是 `audit-video.sh` 存在的意义。
+
+### 卡模板长什么样
+
+`examples/demo-vertical/` 是另一条**纯模板**的预览片（5 套卡各一拍），
+不需要任何素材和 API key，用来看模板系统：
 
 ```bash
-./lib/make-placeholders.sh examples/demo-vertical               # 占位配音，没有 API key 也能跑
-node lib/storyboard.js  --project examples/demo-vertical        # 5 张卡渲成 webm + 写 shots.tsv
+./lib/make-placeholders.sh examples/demo-vertical
+node lib/storyboard.js  --project examples/demo-vertical
 ./lib/build-vertical.sh --project examples/demo-vertical --out examples/demo-vertical/demo-nosub.mp4
 /usr/bin/python3 lib/gen-subs.py --project examples/demo-vertical --skip c03 --no-merge
 ./lib/burn-subs.sh examples/demo-vertical/demo-nosub.mp4 examples/demo-vertical/demo-v1.mp4 \
                    --manifest examples/demo-vertical/subs/manifest.tsv
-./lib/audit-video.sh --project examples/demo-vertical --video examples/demo-vertical/demo-v1.mp4 --target 15-30
 ```
 
-### 审计对自己也不留情
-
-最后那条 `audit-video.sh` 的真实输出（节选）——它照样把这条 demo 的问题全点出来了：
-
-```
-── ④ 分镜覆盖 / ⑤ 画面构成
-  画面构成: 21.2s  卡片 100%
-  ! 卡片占 100% —— 「整片都是卡」被明确否过，换真实素材
-── ③ 配音
-  ! audio/ 里是**占位配音**（见 audio/.placeholder）—— 绝不能交付
-── 只有人能判的（机器一条都查不了）
-  [ ] 配音够不够有情绪 —— agent 听不到成品音
-  [ ] 这条能不能火 —— 创意判断，只能人拍板
-```
-
-**这条 demo 展示的是模板系统，不是一条能发的成片**——真片必须混真实切片和产品录屏
-（卡片只能当标题/钩子），并且要用真配音。审计说得没错，不打算掩饰。
+它的审计结果会明确写着「卡片占 100% —— 换真实素材」。**审计对自己人也不留情。**
 
 ---
 
@@ -112,7 +127,7 @@ git clone https://github.com/ChenJiangxi/auramate-video.git && cd auramate-video
 | 我要… | 按顺序读 |
 |---|---|
 | **做一条抖音竖版片** | `skills/video-master/` → `skills/topic-and-script/` → `skills/vertical-shortform/` |
-| **只是想先跑通看看** | 上面 Demo 的复现命令 → `references/zero-context-walkthrough.md` |
+| **只是想先跑通看看** | 上面「卡模板长什么样」那段命令 → `references/zero-context-walkthrough.md` |
 | **想选题 / 写口播稿** | `skills/topic-and-script/`（角度库 + 钩子句式 + 实测语速） |
 | **确认这题材能不能做** | `skills/compliance-redlines/`（先过这关，再谈别的） |
 | **扒外部真实素材** | `skills/real-clip-mashup/` → `lib/fetch-clip.sh` → `lib/fit-vertical.sh` |
@@ -148,7 +163,7 @@ git clone https://github.com/ChenJiangxi/auramate-video.git && cd auramate-video
 | `skills/ffmpeg-cookbook/` | ffmpeg 配方库：竖版化、zoompan、concat、mux、探测 |
 | `lib/` | 可直接跑的脚本（扒素材 / 竖版化 / build / 配音 / 字幕 / 封面 / 合规 / 审计 / 交付） |
 | `references/` | 长文参考：零 context 走查、B 站横版长视频、平台文案模板 |
-| `examples/` | 两个可跑样例（`hello-vertical` 最小链路 / `demo-vertical` 上面那条 demo），都不需要 API key |
+| `examples/` | 两个可跑样例（`hello-vertical` 最小链路 / `demo-vertical` 卡模板预览），都不需要 API key |
 | `tests/validate.sh` | 自检：一致性、frontmatter、死链、4 个 linter、端到端渲染、零 key 冒烟 |
 | `tests/check-consistency.py` | 一致性：孤儿脚本 / 路由完整 / README 覆盖 / **旧说法不许复活** |
 | `SECRETS-CHECKLIST.md` | **需要人类通过 prompt 传入的密钥清单**（repo 内只有占位符，无真值） |
@@ -189,7 +204,8 @@ git clone https://github.com/ChenJiangxi/auramate-video.git && cd auramate-video
 ## 还没验证的部分（诚实留档）
 
 - `lib/gen-voice.mjs` **没跑过真实 MiniMax API**（缺 key）。逻辑从现役脚本移植，
-  加了报错码提示，但真实返回没验过。
+  加了报错码提示，但真实返回没验过。上面 demo 里的配音是**之前用同一套参数生成好的真音频**，
+  不是这次现调的。
 - `lib/rec-page.js` / `lib/render-card.js` 只过了语法检查，**没跑过真实站点**。
 - 语速表只实测了 2 个音色（克隆音 @1.10 = 4.98 字/秒、`presenter_male` @1.30 = 6.35），
   `female-tianmei` / `female-shaonv` 还没量过。
