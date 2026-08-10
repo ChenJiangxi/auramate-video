@@ -31,7 +31,12 @@ AP.add_argument('--font-size', type=int, default=60)
 AP.add_argument('--font', default='/System/Library/Fonts/STHeiti Medium.ttc')
 AP.add_argument('--font-index', type=int, default=0)
 AP.add_argument('--gap', type=float, default=0.25)
-AP.add_argument('--max-chars', type=int, default=15, help='一行最多几个字，超了就断行')
+AP.add_argument('--max-chars', type=int, default=0,
+                help='一行最多几个字。默认 0 = 不按字数、按**渲染像素宽度**断行（中英混排时字数不代表宽度）')
+AP.add_argument('--max-width', type=float, default=0.86,
+                help='一行最多占画幅宽度的比例，默认 0.86（1080 → 929px）')
+AP.add_argument('--min-chars-line', type=int, default=5,
+                help='比这个短的行算碎句，会尝试并进相邻行')
 AP.add_argument('--no-merge', action='store_true',
                 help='不合并短子句 —— 每个标点就是一次断行。钩子那句要用这个，'
                      '否则「他三天没回」+「你点开他的朋友圈」会被合成一行，三拍节奏就没了')
@@ -65,19 +70,62 @@ def dur(path):
          '-of', 'csv=p=0', path]).decode().strip())
 
 
-def split_lines(text, limit):
-    """按标点切子句，再把短句合并到 limit 字以内（--no-merge 时不合并）。"""
+LIMIT_PX = A.w * A.max_width
+
+
+def _w(t):
+    """这段文字渲染出来多宽（像素）。中英混排时字数完全不代表宽度 ——
+    「而 auramate」10 个字符只有 6 个汉字宽，按字数断行会把它单独扔成一行。"""
+    try:
+        return FONT.getlength(t)
+    except AttributeError:                      # 老 Pillow
+        return FONT.getsize(t)[0]
+
+
+def _fits(t):
+    return (len(t) <= A.max_chars) if A.max_chars else (_w(t) <= LIMIT_PX)
+
+
+def split_lines(text, limit=None):
+    """按标点切子句再合并成行。
+
+    两个关键点（都是踩出来的）：
+    1. **切分要保留标点**。早先用 re.split(r'[，。！？、；：]') 把分隔符吃掉了，
+       结果「排盘差了一整天，等于把这个人，算成了另一个人。」合并成
+       「排盘差了一整天等于把这个人」—— 一串没有停顿的字，读者断不开句。
+       现在用 lookbehind 切分，标点留在行内，只把**行尾**标点去掉（屏幕上不需要）。
+    2. **按渲染宽度断行，不按字数**。见 _w()。
+    """
     text = text.replace('——', '，').replace('—', '，')
-    parts = [p.strip() for p in re.split(r'[，。！？、；：]', text) if p.strip()]
+    parts = [p for p in re.split(r'(?<=[，。！？、；：])', text) if p.strip()]
+    if not parts:
+        return ['']
     if A.no_merge:
-        return parts or ['']
+        return [p.rstrip('，。！？、；：').strip() for p in parts]
+
     merged = []
     for p in parts:
-        if merged and len(merged[-1]) + len(p) <= limit:
+        if merged and _fits(merged[-1] + p):
             merged[-1] += p
         else:
             merged.append(p)
-    return merged or ['']
+
+    # 碎句回收：太短的行并进相邻行（宽度还够的话），免得出现孤零零一行
+    i = 0
+    while i < len(merged):
+        cur = merged[i].rstrip('，。！？、；：').strip()
+        if len(cur) < A.min_chars_line and len(merged) > 1:
+            if i + 1 < len(merged) and _fits(merged[i] + merged[i + 1]):
+                merged[i] = merged[i] + merged[i + 1]
+                del merged[i + 1]
+                continue
+            if i > 0 and _fits(merged[i - 1] + merged[i]):
+                merged[i - 1] = merged[i - 1] + merged[i]
+                del merged[i]
+                continue
+        i += 1
+
+    return [m.rstrip('，。！？、；：').strip() for m in merged] or ['']
 
 
 def render(text, fn):
@@ -105,11 +153,13 @@ for c in clips:
     if name in SKIP:
         acc += D + A.gap
         continue
-    lines = split_lines(c['text'], A.max_chars)
+    lines = split_lines(c['text'])
     tot = sum(len(l) for l in lines) or 1
     s = acc
     for i, l in enumerate(lines):
         seg = D * len(l) / tot
+        if _w(l) > LIMIT_PX:
+            print(f'  ⚠ {name} 第{i+1}行超宽 {_w(l):.0f}px > {LIMIT_PX:.0f}px：{l}')
         end = acc + D if i == len(lines) - 1 else s + seg
         fn = os.path.join(OUT, f's{idx:03d}.png')
         render(l, fn)

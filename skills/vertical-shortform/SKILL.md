@@ -190,6 +190,16 @@ enc_celeb(){ ffmpeg -nostdin -y -v error -ss "$4" -t "$2" -i "$1" -vf \
 # 用法: enc_celeb footage/ext/ai-deepseek.mp4 $T_c01 work/v01.mp4 2   # 最后一个 = 起始秒
 ```
 
+**B2. 拿不准源多大就用 `fit`（推荐默认）**
+
+```
+c06	fit	footage/rec/x.webm	6
+```
+
+转交 `lib/fit-vertical.sh`，按 `--max-upscale`（默认 1.6）自动决定「铺满」还是
+「模糊垫底 + 前景保持清晰」。**低分辨率源用 `full` 会闷头拉满、糊得没法看**，
+用 `fit` 至少不会糊过头。
+
 **C. 竖版录屏 / 竖版素材，整屏铺满**
 
 ```bash
@@ -323,6 +333,7 @@ lib/package-delivery.sh --video <slug>-v3.mp4 --cover cover.png --caption captio
 | 音画越到后面越不同步 | 音轨没 `apad`+`atrim` 到 `T_cNN` |
 | 最后一拍被切掉 | `-shortest` 且音轨比视频长 → 检查最后一拍 `T` 是否算漏 GAP |
 | 某一拍黑屏 | 素材比 `T_cNN` 短 → 换素材或 `setpts` 放慢 |
+| 某几拍明显糊 | 源比目标窄，被升采样拉大了 | build 输出里看「放大N×」；>1.3× 改用 `fit`，根治靠提高录制分辨率 |
 | 成片没声音 | 逐拍编码忘了 `-an`，或 mux 少了 `-map` |
 | build 报「shots.tsv 里没有 cNN」 | 加了句子但 shots.tsv 没跟着加行 | `make-placeholders.sh --footage` 会补齐；手写时一句一行别漏 |
 | `--out` 写相对路径结果文件跑到奇怪的地方 | 相对路径按**当前工作目录**解，不是按 `--project` | 要么用绝对路径，要么先 `cd` 到你想要的输出目录 |

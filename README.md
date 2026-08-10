@@ -22,7 +22,12 @@
 这条不是拿模板凑的演示片，是**照着一条真实交付过的选题（「AI 考中国命理」）
 用这个 repo 的脚本从头跑出来的**——配音是这次**现调 MiniMax 接口**生成的
 （`presenter_male` @1.28，9 句 52.7s），产品录屏和榜单数据都是真的，
-字幕按每句配音的实测时长算。
+字幕按每句配音的实测时长算，成片 1080×1920 / CRF 23。
+
+> 有几拍的产品录屏源只有 540–720 宽，升到 1080 会糊。这类拍用 `fit` 编码器
+> （自动限制放大倍数、必要时改成模糊垫底），而不是闷头拉满。
+> `audit-video.sh` 的 ⑤b 会把每一拍的放大倍数逐条列出来 —— 根治办法是**按目标分辨率
+> 倒推录制分辨率**（要在 1080 宽做 1.5× 特写，源至少 1620 宽），见 `skills/product-demo/`。
 
 ```bash
 # 配音这步长这样（key 从环境变量读，绝不进 argv）
@@ -98,12 +103,38 @@ node lib/storyboard.js  --project examples/demo-vertical
 
 ```bash
 git clone https://github.com/ChenJiangxi/auramate-video.git && cd auramate-video
+./setup.sh                        # 装依赖 + 按「能力」汇报（不是按工具）
 ./install.sh ~/your-agent-dir     # 复制 skills/* 到 <agent>/.claude/skills/
-./tests/check-deps.sh             # 缺什么、缺了会卡在哪一步，一次说清
 ```
 
 不装也行——**直接把 `skills/video-master/SKILL.md` 全文贴进 context 就能开工**，
 它内部所有引用都是 repo 内相对路径。
+
+### ⚠ skill 给的是知识和脚本，不是能力
+
+**把 skill 丢给一个空白 agent（codex / 别的 CLI），它不会自动就有录屏和配音。**
+这些能力取决于**宿主机上有什么**、以及**能不能出网**：
+
+| 能力 | 需要 | 没有会怎样 |
+|---|---|---|
+| 剪辑合成 / 竖版化 / 交付 | `ffmpeg` + `ffprobe`（带 libx264） | 全线不可用，这是底线 |
+| 字幕 / 封面 / 图片补丁 | `python3` + `Pillow` | 出不了字幕和封面 |
+| **占位配音**（跑通管线用） | `ffmpeg` | — |
+| 真配音 | `node` + `MINIMAX_API_KEY` + 能出网到 `api.minimax.io` | 退回占位配音，管线照跑 |
+| 产品录屏 | `node` + `playwright` + chromium + **目标站登录凭据** | 用不了自家界面画面 |
+| HTML 卡渲染 | 同上（不需要凭据） | 出不了大字卡 / 数据榜 |
+| 扒外部真实切片 | `yt-dlp` + 能出网到素材站 | 只能用手上已有的素材 |
+
+```bash
+./setup.sh            # 尽量自动装齐，最后按上表逐项报「行 / 不行 + 怎么补」
+./setup.sh --check    # 只体检不安装
+```
+
+**只要「剪辑合成 + 字幕 + 占位配音」这三项在，就已经能跑通全流程出一版粗剪。**
+录屏 / 真配音 / 扒素材是增量能力，缺哪个补哪个。
+
+云沙箱型 agent（比如出网走白名单的）最容易卡在两处：chromium 装不下来（录屏和渲卡没了）、
+`api.minimax.io` 不可达（配音没了）。`setup.sh` 会把这两条单独探测并明说。
 
 ---
 
@@ -174,6 +205,7 @@ git clone https://github.com/ChenJiangxi/auramate-video.git && cd auramate-video
 | `examples/` | 两个可跑样例（`hello-vertical` 最小链路 / `demo-vertical` 卡模板预览），都不需要 API key |
 | `tests/validate.sh` | 自检：一致性、frontmatter、死链、4 个 linter、端到端渲染、零 key 冒烟 |
 | `tests/check-consistency.py` | 一致性：孤儿脚本 / 路由完整 / README 覆盖 / **旧说法不许复活** |
+| `setup.sh` | 装依赖并按**能力**汇报（剪辑 / 字幕 / 配音 / 录屏 / 扒素材 各自行不行） |
 | `SECRETS-CHECKLIST.md` | **需要人类通过 prompt 传入的密钥清单**（repo 内只有占位符，无真值） |
 
 ---

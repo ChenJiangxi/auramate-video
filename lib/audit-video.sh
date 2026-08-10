@@ -12,6 +12,7 @@
 #   ③ 配音      verify-audio.sh     每句非空 / 时长合理 / 不是静音
 #   ④ 分镜      shots.tsv 覆盖每一拍，素材存在且够长
 #   ⑤ 画面构成  按素材来源统计 卡片 / 真实切片 / 产品录屏 各占多少时长
+#   ⑤b 清晰度    每拍源分辨率 → 放大倍数（>2× 判失败，>1.3× 提示）
 #   ⑥ 字幕      条数 == 拆句数，没有漏行
 #   ⑦ 成片      verify-output.sh    画幅 / 帧率 / 音轨 / faststart / 时长区间
 #   ⑧ 交付      文件名唯一带版本；交付包四件套是否齐
@@ -154,6 +155,27 @@ PYEOF
   while IFS= read -r l; do bad "${l#ERR }"; done < <(grep '^ERR ' /tmp/av-au-sh.log)
   while IFS= read -r l; do warn "${l#WARN }"; done < <(grep '^WARN ' /tmp/av-au-sh.log)
   [ "$rc" = 0 ] && ok "每一拍都有素材，且素材够长"
+else skip "还没有 shots.tsv"; fi
+
+# ---------------------------------------------------------------- ⑤b 清晰度
+sec "⑤b 清晰度（源分辨率 → 放大倍数）"
+if [ -f "$PROJECT/shots.tsv" ]; then
+  blur=0
+  while IFS=$'\t' read -r clip kind src ss extra; do
+    [ -n "$clip" ] || continue
+    case "$src" in /*) sp="$src";; *) sp="$PROJECT/$src";; esac
+    [ -f "$sp" ] || continue
+    sw="$("$FP" -v error -select_streams v:0 -show_entries stream=width -of csv=p=0 "$sp" 2>/dev/null | head -1)"
+    [ -n "$sw" ] || continue
+    up="$(awk -v s="$sw" -v w="$W" 'BEGIN{printf "%.2f", w/s}')"
+    if awk -v u="$up" 'BEGIN{exit !(u>2.0)}'; then
+      bad "${clip}: 源宽 ${sw}px → 放大 ${up}× —— 太糊，换高分辨率源或重录"; blur=1
+    elif awk -v u="$up" 'BEGIN{exit !(u>1.3)}'; then
+      warn "${clip}: 源宽 ${sw}px → 放大 ${up}× —— 偏糊，能换源就换"
+    fi
+  done < "$PROJECT/shots.tsv"
+  [ "$blur" = 0 ] && ok "没有超过 2× 的升采样"
+  echo "  录制分辨率倒推：要在 ${W} 宽上做 1.5× 特写，源至少要 $(( W * 3 / 2 )) 宽"
 else skip "还没有 shots.tsv"; fi
 
 # ---------------------------------------------------------------- ⑥ 字幕

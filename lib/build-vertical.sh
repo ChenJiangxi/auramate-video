@@ -12,15 +12,17 @@
 #
 # 编码器:
 #   card   静态卡/已竖版渲染物 —— 直接 scale 铺满
-#   full   竖版录屏/竖版素材   —— scale + unsharp 锐化
+#   full   竖版录屏/竖版素材   —— scale + unsharp 锐化（**不限制放大倍数**，源要够清晰）
+#   fit    不确定源多大就用它 —— 转交 fit-vertical.sh，自动限制放大倍数防糊（推荐默认）
 #   celeb  横屏真人切片        —— 模糊背景垫底 + 主体等比居中
 #   patch  录屏 + 图片补丁     —— 第5列 = "补丁图:x:y:crop_w:crop_h:crop_x:pad_y"
 #
 # 产物: <project>/work/vNN.mp4 · work/video.mp4 · work/voice.m4a · <out>
 set -euo pipefail
 
+HERE_LIB="$(cd "$(dirname "$0")" && pwd)"
 PROJECT=""; SHOTS="shots.tsv"; OUT=""; GAP=0.25; GAIN="4dB"
-W=1080; H=1920; FPS=30; CRF=19
+W=1080; H=1920; FPS=30; CRF=19; MAXUP=1.6
 while [ $# -gt 0 ]; do
   case "$1" in
     --project) PROJECT="$2"; shift 2;;
@@ -32,6 +34,7 @@ while [ $# -gt 0 ]; do
     --h)       H="$2";       shift 2;;
     --fps)     FPS="$2";     shift 2;;
     --crf)     CRF="$2";     shift 2;;
+    --max-upscale) MAXUP="$2"; shift 2;;   # 只影响 fit 编码器
     -h|--help) sed -n '2,25p' "$0"; exit 0;;
     *) echo "unknown arg: $1" >&2; exit 2;;
   esac
@@ -100,6 +103,19 @@ enc_card(){ "$FF" -nostdin -y -v error -i "$1" -t "$2" \
 enc_full(){ "$FF" -nostdin -y -v error -ss "$4" -t "$2" -i "$1" \
   -vf "scale=${W}:${H}:flags=lanczos,unsharp=7:7:0.9,$V" -an -c:v libx264 -crf "$CRF" -pix_fmt yuv420p "$3"; }
 
+# 低分辨率源用 full 会闷头拉满、糊得没法看。fit 交给 fit-vertical.sh，
+# 它按 --max-upscale 自动决定「铺满」还是「模糊垫底 + 前景保持清晰」。
+# 注意：别把 fit-vertical 的输出直接管道给带 exit 的 awk —— awk 提前退出会给上游
+# 发 SIGPIPE，配合 set -o pipefail + set -e 会把整个 build 静默干掉（踩过）。
+# 先整段收进变量，再在变量上做提取。
+enc_fit(){
+  local out
+  out="$("$HERE_LIB/fit-vertical.sh" "$1" "$3" --dur "$2" --ss "$4" \
+           --w "$W" --h "$H" --fps "$FPS" --crf "$CRF" --max-upscale "$MAXUP" 2>&1)" || {
+    echo "$out" >&2; return 1; }
+  FITNOTE="$(printf '%s\n' "$out" | grep -m1 'mode=' | sed 's/^ *//')"
+}
+
 enc_celeb(){ "$FF" -nostdin -y -v error -ss "$4" -t "$2" -i "$1" -vf \
   "split=2[a][b];[a]scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H},boxblur=26:3,eq=brightness=-0.34:saturation=0.66[bg];[b]scale=${W}:$(( H * 43 / 100 )):force_original_aspect_ratio=decrease,unsharp=5:5:0.6[fg];[bg][fg]overlay=(W-w)/2:$(( H * 23 / 100 )),$V" \
   -an -c:v libx264 -crf "$CRF" -pix_fmt yuv420p "$3"; }
@@ -124,6 +140,7 @@ for name in "${CLIPS[@]}"; do
   case "${KIND[$i]}" in
     card)  enc_card  "${SRC[$i]}" "${TS[$i]}" "$o";;
     full)  enc_full  "${SRC[$i]}" "${TS[$i]}" "$o" "${SS[$i]}";;
+    fit)   enc_fit   "${SRC[$i]}" "${TS[$i]}" "$o" "${SS[$i]}";;
     celeb) enc_celeb "${SRC[$i]}" "${TS[$i]}" "$o" "${SS[$i]}";;
     patch) enc_patch "${SRC[$i]}" "${TS[$i]}" "$o" "${SS[$i]}" "${EXTRA[$i]}";;
     *) echo "  ✗ 未知编码器 '${KIND[$i]}' ($name)" >&2; exit 4;;
@@ -131,7 +148,16 @@ for name in "${CLIPS[@]}"; do
   got="$(dur "$o")"
   awk -v a="$got" -v b="${TS[$i]}" 'BEGIN{ if ((a-b)>0.15 || (b-a)>0.15) exit 1 }' \
     || echo "  ⚠ $name 实际 ${got}s ≠ 目标 ${TS[$i]}s（素材可能比这拍短）" >&2
-  printf "  %s  %-5s  %ss\n" "$name" "${KIND[$i]}" "$got"
+  # 清晰度账：源比目标窄多少就要放大多少。fit 编码器会自己封顶，所以不按这个口径警告。
+  sw="$("$FP" -v error -select_streams v:0 -show_entries stream=width -of csv=p=0 "${SRC[$i]}" 2>/dev/null | head -1)"
+  up="$(awk -v s="${sw:-0}" -v w="$W" 'BEGIN{ if (s>0) printf "%.2f", w/s; else print "?" }')"
+  if [ "${KIND[$i]}" = fit ]; then
+    printf "  %s  %-5s  %ss  源宽%s  %s\n" "$name" "${KIND[$i]}" "$got" "${sw:-?}" "${FITNOTE:-已封顶}"
+  else
+    mark="$(awk -v u="${up}" 'BEGIN{ if (u=="?") print ""; else if (u>2.0) print "  ✗ 太糊，换高分辨率源（或改用 fit 编码器）"; else if (u>1.3) print "  ⚠ 偏糊（可改用 fit）"; else print "" }')"
+    [ -n "$mark" ] && echo "  ⚠ $name 源宽 ${sw}px → 放大 ${up}×${mark}" >&2
+    printf "  %s  %-5s  %ss  源宽%s 放大%s×\n" "$name" "${KIND[$i]}" "$got" "${sw:-?}" "$up"
+  fi
   echo "file '$o'" >> "$WORK/vl.txt"
   i=$((i+1))
 done
