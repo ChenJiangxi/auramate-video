@@ -2,6 +2,7 @@
 # init-project.sh — 建一个新视频工程的标准目录 + 模板文件。
 # 用法: init-project.sh <project-dir> [--slug <slug>]
 set -euo pipefail
+REPO="$(cd "$(dirname "$0")/.." && pwd)"   # 打印真实路径，别让读的人自己猜 <repo> 是什么
 DIR="${1:-}"; [ -n "$DIR" ] || { echo "用法: init-project.sh <project-dir> [--slug xxx]" >&2; exit 2; }
 shift
 SLUG="$(basename "$DIR")"
@@ -50,17 +51,35 @@ EOF
 
 cat <<EOF
 建好了: $(pwd)
+repo:   ${REPO}
 
-下一步:
-  1. 写 topic.md（钩子 / 为什么能火 / 落到什么功能）
-  2. 写 clips.json（一句 = 一拍；≤30 字；写「他/她」不写 ta）
-  3. 找素材填 shots.tsv（编码器: card | full | celeb | patch）
-  4. 配音:   node <repo>/lib/gen-voice.mjs --sample --text "第一句" --out audio/samples/   # 先给人挑音色
-  5. 全量:   node <repo>/lib/gen-voice.mjs --clips clips.json --out audio/ --voice <选定> --speed 1.28
-  6. 自检:   <repo>/lib/verify-audio.sh audio clips.json
-  7. 合成:   <repo>/lib/build-vertical.sh --project . --out ${SLUG}-nosub.mp4
-  8. 字幕:   /usr/bin/python3 <repo>/lib/gen-subs.py --project .
-             <repo>/lib/burn-subs.sh ${SLUG}-nosub.mp4 ${SLUG}-v1.mp4
-  9. 验收:   <repo>/lib/verify-output.sh ${SLUG}-v1.mp4 --expect-w 1080 --expect-h 1920 --fps 30
- 10. 交付:   <repo>/lib/package-delivery.sh --video ${SLUG}-v1.mp4 --cover cover.png --caption caption.txt
+写内容:
+  1. topic.md   钩子 / 为什么能火 / 落到什么功能 / 安全框     → skills/topic-and-script
+  2. clips.json 一句 = 一拍；写「他/她」不写 ta
+  3. 两道闸门（定稿就跑，别攒到最后）:
+       /usr/bin/python3 ${REPO}/lib/check-script.py     --project . --target 40-60
+       /usr/bin/python3 ${REPO}/lib/check-compliance.py --project .
+
+还没有 API key / 还没找到素材？先跑占位，把管线和节奏验对再花钱:
+  ${REPO}/lib/make-placeholders.sh . --footage
+  （占位配音时长按实测语速算，粗剪节奏跟成片接近；🔴 绝不能交付）
+
+有 key 之后:
+  4. 音色采样让人挑: node ${REPO}/lib/gen-voice.mjs --sample --text "第一句" --out audio/samples/
+  5. 全量配音:       node ${REPO}/lib/gen-voice.mjs --clips clips.json --out audio/ --voice <选定> --speed 1.28
+  6. 配音自检:       ${REPO}/lib/verify-audio.sh audio clips.json   # 通过后删掉 audio/.placeholder
+
+素材（按目录约定摆，audit 靠它统计画面构成）:
+  footage/ext/ 真实切片   footage/rec/ 产品录屏   html/beats/ 卡片
+  外部切片: ${REPO}/lib/fetch-clip.sh search "关键词" → get → probe（抽帧看水印！）→ fit-vertical.sh
+  产品录屏: ${REPO}/lib/rec-page.js → ${REPO}/lib/zoom-crop.sh
+  动效卡:   写 storyboard.json → node ${REPO}/lib/storyboard.js --project .
+
+出片:
+  7. 合成:   ${REPO}/lib/build-vertical.sh --project . --out ${SLUG}-nosub.mp4
+  8. 字幕:   /usr/bin/python3 ${REPO}/lib/gen-subs.py --project .
+             ${REPO}/lib/burn-subs.sh ${SLUG}-nosub.mp4 ${SLUG}-v1.mp4
+  9. 验收:   ${REPO}/lib/audit-video.sh --project . --video ${SLUG}-v1.mp4 --target 40-60
+             （机器项全过 ≠ 能发，人工那张清单必须真的过一遍）
+ 10. 交付:   ${REPO}/lib/package-delivery.sh --video ${SLUG}-v1.mp4 --cover cover.png --caption caption.txt
 EOF

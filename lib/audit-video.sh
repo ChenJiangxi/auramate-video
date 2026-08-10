@@ -82,6 +82,9 @@ if [ -d "$PROJECT/audio" ] && [ -f "$PROJECT/clips.json" ]; then
   if "$HERE/verify-audio.sh" "$PROJECT/audio" "$PROJECT/clips.json" >/tmp/av-au-a.log 2>&1; then
     ok "$(grep -m1 '配音总时长' /tmp/av-au-a.log | sed 's/^ *//')"
   else bad "配音有问题"; grep '✗' /tmp/av-au-a.log | sed 's/^/    /'; fi
+  # 占位配音只看时长和响度是查不出来的，会一路静默通过 —— 必须单独点名
+  [ -f "$PROJECT/audio/.placeholder" ] && \
+    warn "audio/ 里是**占位配音**（见 audio/.placeholder）—— 绝不能交付，换成真配音后删掉该标记"
 else skip "还没配音（audio/ 为空）"; fi
 
 # ---------------------------------------------------------------- ④⑤ 分镜 + 画面构成

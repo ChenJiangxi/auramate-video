@@ -286,6 +286,15 @@ lib/audit-video.sh --project <工程> --video <成片.mp4> --target 40-60
 repo 里**没有任何真实密钥**。开工前按 `SECRETS-CHECKLIST.md` 找人类要，
 让他把值作为 prompt 传给你，或写进你的密钥管理器。缺哪个、缺了会卡在哪一步，那份清单里写清楚了。
 
+**还没拿到 key 也别停着** —— 先跑占位把管线和节奏验对：
+
+```bash
+lib/make-placeholders.sh <工程> --footage   # 占位配音（按实测语速算时长）+ 占位素材
+```
+
+占位也能一路跑到 `audit-video.sh`，等 key 到了再覆盖真配音（记得删 `audio/.placeholder`）。
+完整的零 key 走查见 `references/zero-context-walkthrough.md`。
+
 **永远不要**把拿到的密钥回显、写进文件、写进 commit。用完提醒人类轮换。
 
 ---

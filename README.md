@@ -17,12 +17,32 @@ cd auramate-video
 # 1. 装 skills 到你的 agent（Claude Code 为例）
 ./install.sh ~/your-agent-dir        # 复制 skills/* 到 <agent>/.claude/skills/
 
-# 2. 检查依赖
-./tests/validate.sh                  # 校验 skill 结构 + 跑通最小样例视频
+# 2. 检查依赖（缺什么、缺了会卡在哪一步，一次说清）
+./tests/check-deps.sh
 
 # 3. 开工：读总纲，它会把你路由到对应的子 skill
 cat skills/video-master/SKILL.md
 ```
+
+**做第一条视频**（没有任何 API key 也能一路跑到底）：
+
+```bash
+lib/init-project.sh ~/work/my-first-video     # 建工程骨架，并打印后续每一步的完整命令
+cd ~/work/my-first-video
+# 写 topic.md 和 clips.json（怎么写见 skills/topic-and-script/）
+<repo>/lib/make-placeholders.sh . --footage   # 占位配音 + 占位素材，先把管线跑通
+<repo>/lib/build-vertical.sh --project . --out draft-nosub.mp4
+/usr/bin/python3 <repo>/lib/gen-subs.py --project .
+<repo>/lib/burn-subs.sh draft-nosub.mp4 draft-v1.mp4
+<repo>/lib/audit-video.sh --project . --video draft-v1.mp4
+```
+
+管线跑通、节奏看对了，再换真配音和真素材 —— 别拿着占位素材去精修，也**别把占位配音交付出去**。
+
+这条路径是真跑过的（干净克隆、零 key、走到 `AUDIT PASS`），完整走查和踩到的坑见
+`references/zero-context-walkthrough.md`。
+
+想验证 repo 本身没坏（会跑好几分钟渲染）：`./tests/validate.sh`
 
 没装 `install.sh` 的 agent 也行——**直接把 `skills/video-master/SKILL.md` 全文贴进 context 就能开工**，
 它内部所有引用都是 repo 内相对路径。
@@ -48,7 +68,7 @@ cat skills/video-master/SKILL.md
 | `skills/ffmpeg-cookbook/` | ffmpeg 配方库：竖版化、zoompan、concat、mux、探测 |
 | `lib/` | 可直接复制到项目里跑的脚本模板（扒素材 / 竖版化 / build / 配音 / 字幕 / 封面 / 合规 / 探测） |
 | `examples/` | 最小可跑样例，不需要任何 API key |
-| `references/` | 长文参考：B 站横版长视频、平台文案模板 |
+| `references/` | 长文参考：零 context 走查、B 站横版长视频、平台文案模板 |
 | `tests/validate.sh` | 自检：frontmatter、死链、脚本/合规 linter、样例能出片 |
 | `SECRETS-CHECKLIST.md` | **需要人类通过 prompt 传入的密钥清单**（repo 内只有占位符，无真值） |
 

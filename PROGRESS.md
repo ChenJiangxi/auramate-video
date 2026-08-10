@@ -100,11 +100,13 @@
 - [x] 画面构成统计：按 `footage/ext` / `footage/rec` / `html/beats` 目录约定
       算卡片 / 真实切片 / 产品录屏各占多少时长
 
-### Run 7 — 零 context 冒烟测试
+### ✅ Run 7 — 零 context 冒烟测试（2026-08-10）
 
-- [ ] 在干净目录里，只给 repo + SECRETS-CHECKLIST，走一遍完整流程
-- [ ] 记录卡住的每一处 → 回填到对应 skill
-- [ ] 重复直到能一次跑通
+- [x] 干净目录 + 干净克隆 + **零 API key**，从 `init-project` 走到 `AUDIT PASS`
+- [x] 卡壳 5 处全部回填（见下方自测记录 + `references/zero-context-walkthrough.md`）
+- [x] `lib/make-placeholders.sh` + `lib/_fix_shots.py`：任意工程都能造占位配音/素材，
+      并补齐 shots.tsv 缺的拍
+- [x] `tests/validate.sh` 新增「零 context 冒烟」常驻断言 —— 这条路径以后坏了会立刻红
 
 ### Run 8+ — 收尾
 
@@ -125,6 +127,32 @@
 | 4 | 2026-08-10 | ✅ OK | ✅ 同上 + 产品录屏工具 9 条断言 | 三个新脚本都在真实录屏上跑过；抽帧目视确认浏览器壳正确 |
 | 5 | 2026-08-10 | ✅ OK | ✅ 同上 + 5 张卡真渲染 1080×1920 | 抽帧目视揪出 2 个模板 bug 并修掉 |
 | 6 | 2026-08-10 | ✅ OK | ✅ 同上 + audit 三条断言 | audit 在样例工程上真跑；揪出 build-vertical 一个路径 bug |
+| 7 | 2026-08-10 | ✅ OK | ✅ 同上 + 零 key 全链路出片 1080×1920 | 干净克隆真走一遍，揪出 5 处「文档看着通、真跑就断」 |
+
+### Run 7 自测记录（零 context 冒烟）
+
+**怎么测的**
+
+不是读文档判断，是**真的干净克隆**（`git clone` 到临时目录）、真的照 README 走、
+真的在没有任何 API key 的情况下建一个新工程走到底。
+
+**发现并修掉的 5 处卡壳**
+
+1. **没有 key 就完全走不下去** —— 整条管线 audio-driven，没配音连 `build-vertical` 都起不来
+   （退出码 4）；repo 里只有 `examples/` 有占位素材，且写死在那个例子里。
+   → 新增 `lib/make-placeholders.sh`，任意工程都能造占位配音（时长按实测 6.35 字/秒算）+ 占位素材。
+2. `init-project.sh` 打印字面量 `<repo>`，读的人得自己猜路径 → 改成打印真实绝对路径，
+   并把「没 key 先跑占位」「素材目录约定」「审计」都列进后续步骤。
+3. `shots.tsv` 模板固定 3 行，写了 5 句就 build 失败 → `make-placeholders --footage` 会补齐缺的拍。
+4. README「30 秒上手」第 2 步写 `tests/validate.sh` 却注释成「检查依赖」（名实不符，
+   而且它要跑好几分钟渲染）→ 改成 `check-deps.sh`，并补了「做第一条视频」的完整命令块。
+5. **占位配音会静默通过 audit** —— `verify-audio` 只看时长和响度，正弦音全过。
+   → 留 `audio/.placeholder` 标记，`audit-video.sh` 单独点名警告「绝不能交付」。
+
+**常驻断言**
+
+`validate.sh` 新增 4 条：init-project 不许打印字面量 `<repo>` / shots.tsv 缺行必须被补齐 /
+无 key 必须能出 1080×1920 / audit 必须点名占位配音。以后这条路径再被弄坏会立刻红。
 
 ### Run 6 自测记录（质量闸门）
 

@@ -250,6 +250,45 @@ fi
 rm -rf "$SX/work" "$SX/html" "$SX/shots.tsv"
 fi
 
+# ---------------------------------------------------------------- 3.38
+if [ "$SKIP_RENDER" = 1 ]; then
+  sec "零 context 冒烟（已跳过 --skip-render）"
+else
+sec "零 context 冒烟：从 init-project 起，无任何 API key 走到 audit"
+ZC="$ROOT/tests/fixtures/zc"; rm -rf "$ZC"
+if "$ROOT/lib/init-project.sh" "$ZC" >/tmp/av-zc0.log 2>&1; then
+  grep -q '<repo>' /tmp/av-zc0.log && bad "init-project 打印了字面量 <repo>，读的人得自己猜路径" \
+    || ok "init-project 建好骨架并打印真实 repo 路径"
+else bad "init-project 失败"; sed -n '1,8p' /tmp/av-zc0.log; fi
+# 故意写 5 句，比 init 模板的 shots.tsv 多 —— 缺行必须被自动补上
+cat > "$ZC/clips.json" <<'JSONEOF'
+[
+ {"name":"c01","text":"他三天没回。你点开他的朋友圈，第十七次。"},
+ {"name":"c02","text":"你没想好怎么开口，先偷偷查了你俩合不合。"},
+ {"name":"c03","text":"别不好意思，这几乎是本能。"},
+ {"name":"c04","text":"老祖宗合婚看的就是八字合盘。"},
+ {"name":"c05","text":"就当是换个角度认识自己。auramate。"}
+]
+JSONEOF
+if "$ROOT/lib/make-placeholders.sh" "$ZC" --footage >/tmp/av-zc1.log 2>&1; then
+  grep -q '补了 2 行缺的拍' /tmp/av-zc1.log && ok "占位配音+素材已造，shots.tsv 缺的拍被自动补齐" \
+    || { bad "shots.tsv 缺行没补上"; grep 'shots.tsv' /tmp/av-zc1.log; }
+else bad "make-placeholders 失败"; sed -n '1,10p' /tmp/av-zc1.log; fi
+if "$ROOT/lib/build-vertical.sh" --project "$ZC" --out "$ZC/draft-nosub.mp4" >/tmp/av-zc2.log 2>&1 \
+   && /usr/bin/python3 "$ROOT/lib/gen-subs.py" --project "$ZC" >/tmp/av-zc3.log 2>&1 \
+   && "$ROOT/lib/burn-subs.sh" "$ZC/draft-nosub.mp4" "$ZC/draft-v1.mp4" \
+        --manifest "$ZC/subs/manifest.tsv" >/tmp/av-zc4.log 2>&1; then
+  w=$(ffprobe -v error -select_streams v:0 -show_entries stream=width -of csv=p=0 "$ZC/draft-v1.mp4")
+  h=$(ffprobe -v error -select_streams v:0 -show_entries stream=height -of csv=p=0 "$ZC/draft-v1.mp4")
+  [ "$w" = 1080 ] && [ "$h" = 1920 ] && ok "无 key 也出片：${w}×${h}" || bad "出片 ${w}×${h}"
+else bad "无 key 路径出片失败"; sed -n '1,10p' /tmp/av-zc2.log /tmp/av-zc4.log; fi
+if "$ROOT/lib/audit-video.sh" --project "$ZC" --video "$ZC/draft-v1.mp4" --target 10-40 >/tmp/av-zc5.log 2>&1; then
+  grep -q '占位配音' /tmp/av-zc5.log && ok "audit 点名了占位配音（不会静默当成能交付）" \
+    || bad "audit 没识别出占位配音"
+else bad "audit 在零 context 工程上失败"; sed -n '1,30p' /tmp/av-zc5.log; fi
+rm -rf "$ZC"
+fi
+
 # ---------------------------------------------------------------- 3.4
 sec "脚本 linter"
 # 真实发过的稿子必须放行（阈值不能严到把已交付内容判成错）
