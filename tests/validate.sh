@@ -297,6 +297,36 @@ else bad "audit 在零 context 工程上失败"; sed -n '1,30p' /tmp/av-zc5.log;
 rm -rf "$ZC"
 fi
 
+# ---------------------------------------------------------------- 3.39
+if [ "$SKIP_RENDER" = 1 ] || ! node -e "require('playwright')" 2>/dev/null; then
+  sec "README demo（已跳过：--skip-render 或无 playwright）"
+else
+sec "README demo 可复现（照 README 上的命令原样跑）"
+DV="$ROOT/examples/demo-vertical"
+rm -rf "$DV/audio" "$DV/html" "$DV/work" "$DV/subs" "$DV"/demo-*.mp4
+if "$ROOT/lib/make-placeholders.sh" "$DV" >/tmp/av-dv0.log 2>&1 \
+   && node "$ROOT/lib/storyboard.js" --project "$DV" >/tmp/av-dv1.log 2>&1 \
+   && "$ROOT/lib/build-vertical.sh" --project "$DV" --out "$DV/demo-nosub.mp4" >/tmp/av-dv2.log 2>&1 \
+   && /usr/bin/python3 "$ROOT/lib/gen-subs.py" --project "$DV" --skip c03 --no-merge >/tmp/av-dv3.log 2>&1 \
+   && "$ROOT/lib/burn-subs.sh" "$DV/demo-nosub.mp4" "$DV/demo-v1.mp4" \
+        --manifest "$DV/subs/manifest.tsv" >/tmp/av-dv4.log 2>&1; then
+  w=$(ffprobe -v error -select_streams v:0 -show_entries stream=width  -of csv=p=0 "$DV/demo-v1.mp4")
+  h=$(ffprobe -v error -select_streams v:0 -show_entries stream=height -of csv=p=0 "$DV/demo-v1.mp4")
+  d=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$DV/demo-v1.mp4")
+  [ "$w" = 1080 ] && [ "$h" = 1920 ] && ok "demo 复现成功：${w}×${h} / ${d}s" || bad "demo 出片 ${w}×${h}"
+  # 渲出来的卡不许比这一拍短，否则那一拍会黑屏（真踩过）
+  grep -q '还短' /tmp/av-dv1.log && bad "有卡比这一拍短 —— 加大 storyboard.js --margin" \
+    || ok "5 张卡都不短于对应拍长"
+  if "$ROOT/lib/audit-video.sh" --project "$DV" --video "$DV/demo-v1.mp4" --target 15-30 >/tmp/av-dv5.log 2>&1; then
+    ok "demo 过审计（README 里引用的输出仍然成立）"
+  else bad "demo 没过审计"; grep '✗' /tmp/av-dv5.log | sed 's/^/    /'; fi
+else
+  bad "README 上的 demo 命令跑不通了"
+  for f in /tmp/av-dv0.log /tmp/av-dv1.log /tmp/av-dv2.log /tmp/av-dv4.log; do sed -n '1,5p' "$f" 2>/dev/null; done
+fi
+rm -rf "$DV/audio" "$DV/html" "$DV/work" "$DV/subs" "$DV"/demo-*.mp4
+fi
+
 # ---------------------------------------------------------------- 3.4
 sec "脚本 linter"
 # 真实发过的稿子必须放行（阈值不能严到把已交付内容判成错）

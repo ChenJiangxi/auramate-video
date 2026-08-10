@@ -95,8 +95,11 @@ beat.dur  >  audio/<clip>.mp3 时长 + GAP  >  3.5s 兜底
 **默认就是 audio-driven** —— 只要 `audio/cNN.mp3` 已经生成，卡的时长自动跟配音对齐，
 不会和 `build-vertical.sh` 漂。
 
-> 实测：playwright 录出来的 webm 会比 `dur` **多 0.6–0.9s**（浏览器启停帧）。
-> 这是好事——卡永远够长，`build-vertical.sh` 用 `-t` 裁到精确时长。
+> playwright 的 `recordVideo` 起止会吃掉一点帧，**录出来的长度不等于请求的 `dur`**：
+> 短片（~2s）会多出 0.6–0.9s，长一点的（~4s）反而可能**短 0.1s**。
+> 卡一短，那一拍就黑屏/定格。
+> 所以 `storyboard.js` 默认多录 `--margin 0.6`，并在渲完真量一次、短了直接警告；
+> `build-vertical.sh` 再用 `-t` 裁到精确时长。
 
 ### 模板语法
 
@@ -144,6 +147,8 @@ beat.dur  >  audio/<clip>.mp3 时长 + GAP  >  3.5s 兜底
 | 占位符没替换（页面上出现 `{{x}}`） | data 里少了字段 | `storyboard.js` 会 `!` 警告列出缺哪个 |
 | 字体没生效 | 本机没装 | 换 `_base.css` 里的 `--serif` / `--sans`，或把字体 base64 内嵌 |
 | 动画录到一半 | 渲染时长 < 动画时长 | 动画总时长压到 ≤3s，或调大 `dur` |
+| 那一拍黑屏/定格，audit 报「素材只剩 Xs」 | 渲出来的卡比这一拍短 | 加大 `--margin`（默认 0.6s） |
+| 卡片底部文案和字幕叠在一起 | 底部元素落进了字幕带（y≈1330–1470） | 用 `bottom: var(--above-subs)`，或该拍 `gen-subs --skip` |
 | 画面出现双层字 | 卡自带大字又叠了字幕 | 该拍加进 `gen-subs.py --skip` |
 | ffmpeg 卡死 | `-loop 1` 读 PNG 没配 `-t` | 见 `skills/ffmpeg-cookbook/` |
 | 卡看着很「假」 | 就是卡太多了 | 换真实素材，见 `skills/real-clip-mashup/` |

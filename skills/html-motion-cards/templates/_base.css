@@ -81,6 +81,13 @@ html, body {
 /* ---- 安全区：上下各留 180px，别被平台 UI 压住 ---- */
 .safe { position: absolute; left: 0; right: 0; top: 180px; bottom: 180px; }
 
+/* ---- 字幕带：烧字幕时基线在 Y=1400，60px 字 + 7px 描边、可能两行，
+   实际占 y≈1330–1470。卡片上任何底部文案都必须待在这条带**以上**，
+   否则字幕会和卡片文字叠在一起糊成一团（真踩过：demo 第一版 5 拍里撞了 3 拍）。
+   → 底部元素统一用 bottom: var(--above-subs)，等价于 y ≤ 1300。
+   如果这一拍的卡片本来就自带大字，那就别叠字幕：gen-subs.py --skip cNN ---- */
+:root { --above-subs: 620px; }
+
 /* ---- 动画 ----
    slam  砸屏：scale 1.4→1，用带回弹的 cubic-bezier，配大字
    up    上浮：translateY(34px)→0，配成串的短句

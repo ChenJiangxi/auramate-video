@@ -13,6 +13,10 @@ examples/*/work/
 examples/*/*.mp4
 examples/*/*.webm
 
+# demo 的展示图要进库（README 引用它们）
+!docs/demo/*.gif
+!docs/demo/*.png
+
 # 任何形态的凭据都不该出现在这里，兜底再挡一层
 .env
 .env.*

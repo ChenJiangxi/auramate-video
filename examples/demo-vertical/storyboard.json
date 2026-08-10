@@ -1,0 +1,106 @@
+{
+  "accent": "gold",
+  "beats": [
+    {
+      "clip": "c01",
+      "template": "hook-slam",
+      "data": {
+        "l1": "一条能发的竖版片",
+        "l2": "要跑几步？",
+        "ghost": "8",
+        "sub": "选题 · 脚本 · 素材 · 配音 · 合成 · 字幕 · 封面 · 交付"
+      }
+    },
+    {
+      "clip": "c02",
+      "template": "question",
+      "data": {
+        "a": "素材找齐了，配音也录了",
+        "b": "可就是 <em>差点意思</em>",
+        "placeholder": "到底差在哪儿…",
+        "foot": "于是你翻来覆去改了七版。"
+      }
+    },
+    {
+      "clip": "c03",
+      "template": "bar-rank",
+      "data": {
+        "title": "真实交付成片时长 · <span class=\"hl\">实测</span>",
+        "sub": "六条已交付的抖音竖版片，单位：秒",
+        "guessAt": "0.40",
+        "guessLabel": "40s",
+        "passAt": "0.60",
+        "passLabel": "60s",
+        "verdict": "全部落在",
+        "verdictHl": "40–60 秒",
+        "rows": [
+          {
+            "rank": 1,
+            "name": "56.0s",
+            "tag": "命理体检",
+            "value": 56.0,
+            "color": "linear-gradient(90deg,#f0c878,#e8ba68)"
+          },
+          {
+            "rank": 2,
+            "name": "53.7s",
+            "tag": "名人富豪",
+            "value": 53.7,
+            "color": "linear-gradient(90deg,#c79cff,#b586f0)"
+          },
+          {
+            "rank": 3,
+            "name": "52.3s",
+            "tag": "AI 考命理",
+            "value": 52.3,
+            "color": "linear-gradient(90deg,#7fd0e0,#6bbcd0)"
+          },
+          {
+            "rank": 4,
+            "name": "48.1s",
+            "tag": "AI 测评",
+            "value": 48.1,
+            "color": "linear-gradient(90deg,#88a8f0,#7a9ae8)"
+          },
+          {
+            "rank": 5,
+            "name": "45.7s",
+            "tag": "缘分合盘",
+            "value": 45.7,
+            "color": "linear-gradient(90deg,#f0a878,#e89a68)"
+          },
+          {
+            "rank": 6,
+            "name": "42.6s",
+            "tag": "财库",
+            "value": 42.6,
+            "color": "linear-gradient(90deg,#8ed0a0,#7ec090)"
+          }
+        ]
+      }
+    },
+    {
+      "clip": "c04",
+      "template": "stat-compare",
+      "data": {
+        "title": "闸门前置 vs 攒到最后",
+        "leftLabel": "攒到交付前才查",
+        "leftValue": "7 版",
+        "leftNote": "每次都要重配音重剪",
+        "rightLabel": "选题/脚本定稿就查",
+        "rightValue": "2 版",
+        "rightNote": "错在最便宜的地方就被拦住",
+        "verdict": "返工成本：选题错要全片重做，参数错只要重跑一次脚本。"
+      }
+    },
+    {
+      "clip": "c05",
+      "template": "cta-brand",
+      "data": {
+        "brand": "auramate-video",
+        "tagline": "把做视频的实战经验装进 agent",
+        "url": "github.com/ChenJiangxi/auramate-video"
+      }
+    }
+  ]
+}
