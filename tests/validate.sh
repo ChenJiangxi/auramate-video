@@ -124,6 +124,23 @@ while IFS= read -r f; do
   node --check "$f" 2>/dev/null && ok "$(basename "$f")" || bad "$f node 语法错误"
 done < <(find lib -name '*.mjs' -o -name '*.js' 2>/dev/null | sort)
 
+# ---------------------------------------------------------------- 3.2
+sec "install 三种 target"
+IT="$ROOT/tests/fixtures/inst"; rm -rf "$IT"; mkdir -p "$IT/claude" "$IT/codex"
+if "$ROOT/install.sh" claude "$IT/claude" >/dev/null 2>&1 \
+   && [ -d "$IT/claude/.claude/skills/video-master" ]; then
+  ok "claude target：skills 复制到 .claude/skills/"
+else bad "claude target 失败"; fi
+if "$ROOT/install.sh" codex "$IT/codex" >/dev/null 2>&1 && [ -f "$IT/codex/AGENTS.md" ]; then
+  if grep -q '__REPO__' "$IT/codex/AGENTS.md"; then bad "AGENTS.md 里还有没替换的占位符"
+  else ok "codex target：AGENTS.md 已生成且路径已替换"; fi
+else bad "codex target 失败"; fi
+if "$ROOT/install.sh" bundle "$IT/b.md" >/dev/null 2>&1 && [ -s "$IT/b.md" ]; then
+  nb=$(grep -c '^# ' "$IT/b.md")
+  [ "$nb" -ge 13 ] && ok "bundle target：单文件含 $nb 个标题块" || bad "bundle 只有 $nb 个块，skill 没拼全"
+else bad "bundle target 失败"; fi
+rm -rf "$IT"
+
 # ---------------------------------------------------------------- 3.3
 if [ "$SKIP_RENDER" = 1 ]; then
   sec "fit-vertical（已跳过 --skip-render）"

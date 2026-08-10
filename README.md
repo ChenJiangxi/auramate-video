@@ -110,6 +110,40 @@ git clone https://github.com/ChenJiangxi/auramate-video.git && cd auramate-video
 不装也行——**直接把 `skills/video-master/SKILL.md` 全文贴进 context 就能开工**，
 它内部所有引用都是 repo 内相对路径。
 
+### 给 Codex / Cursor 等只读 AGENTS.md 的 agent
+
+Claude Code 认 `.claude/skills/`，**Codex CLI 不认，它只读 `AGENTS.md`**。所以：
+
+```bash
+./install.sh codex ~/work/my-video      # 在工程目录写一份 AGENTS.md（路由 + 硬规矩 + 命令速查）
+cd ~/work/my-video && codex
+```
+
+**实测跑通过**：给一句「做一条 ~20 秒竖版片，没有 key 就用占位配音，走完全流程并跑 audit」，
+Codex 自己建骨架 → 按模板写 `topic.md`（还自己挑了个合规安全的题材）→ 过两道闸门 →
+占位配音和素材 → 合成 → 字幕 → `AUDIT PASS`，产出 1080×1920 / 21.2s / h264+aac。
+
+非交互跑（`codex exec`）踩到的两个坑，都不是 skill 的问题但会让你以为是：
+
+```bash
+codex exec --skip-git-repo-check -s workspace-write \
+  -m gpt-5.5 \                                    # ① 默认模型可能要求更新版 CLI，报 400
+  -c approval_policy='"never"' \                  # ② 不关审批的话非交互会一直挂着
+  -c 'sandbox_workspace_write.writable_roots=["/path/to/auramate-video"]' \
+  "你的任务"
+```
+
+① 症状是 `The 'xxx' model requires a newer version of Codex`；换个 CLI 支持的模型或升级 codex。
+② 症状是**跑十分钟一个文件都不产出**——它在等审批，而非交互模式没人能批。
+
+### 给只能吃单份 prompt 的 agent
+
+```bash
+./install.sh bundle /tmp/video-skill.md   # 总纲 + 全部 13 个子 skill 拼成一个文件
+```
+
+约 100KB / 粗估 5 万 tokens，脚本路径已经是绝对路径，整份贴进 context 就能开工。
+
 ### ⚠ skill 给的是知识和脚本，不是能力
 
 **把 skill 丢给一个空白 agent（codex / 别的 CLI），它不会自动就有录屏和配音。**
@@ -206,6 +240,8 @@ git clone https://github.com/ChenJiangxi/auramate-video.git && cd auramate-video
 | `tests/validate.sh` | 自检：一致性、frontmatter、死链、4 个 linter、端到端渲染、零 key 冒烟 |
 | `tests/check-consistency.py` | 一致性：孤儿脚本 / 路由完整 / README 覆盖 / **旧说法不许复活** |
 | `setup.sh` | 装依赖并按**能力**汇报（剪辑 / 字幕 / 配音 / 录屏 / 扒素材 各自行不行） |
+| `install.sh` | 接到 agent 上：`claude`（.claude/skills）/ `codex`（AGENTS.md）/ `bundle`（单文件） |
+| `templates/AGENTS.md.tpl` | 给 Codex 用的 AGENTS.md 模板（路由 + 硬规矩摘要 + 命令速查） |
 | `SECRETS-CHECKLIST.md` | **需要人类通过 prompt 传入的密钥清单**（repo 内只有占位符，无真值） |
 
 ---
