@@ -166,13 +166,21 @@ codex exec --skip-git-repo-check -s workspace-write \
 | 克隆音 `voice_id` | 用「本人声音」旁白 | 用系统音色，不影响 |
 | 产品站 URL + 测试账号密码 | 录自家界面 | 录不了产品画面，可以只用外部素材和卡 |
 
-**③ 内容侧的东西（skill 给不了）**
+**③ 内容侧 —— 大部分素材 agent 自己就能拿到，不用人给**
 
-- **品牌信息**：品牌名 / 网址 / 角标文案 / 主色。脚本都有参数
+| 素材 | 谁来搞 |
+|---|---|
+| **产品界面画面** | **agent 自己录**。给 URL + 测试账号就行（`lib/rec-page.js`，已在真实站点上验过：登录 → 录屏 → 720×1280 输出） |
+| **外部真人切片 / 空镜** | **agent 自己扒**（`lib/fetch-clip.sh` 走 yt-dlp，含抽帧查水印） |
+| 动效卡 / 数据榜 | agent 自己渲（`lib/storyboard.js` + 5 套模板） |
+| 封面 | agent 自己出（`lib/make-cover.py`，背景从成片抽帧） |
+
+**真正只能人给的，收敛成三样**：
+
+- **品牌几个字段**：品牌名 / 网址 / 角标文案 / 主色。都是参数，说一次就行
   （`make-brand-assets.py --url --brand`、`make-cover.py --accent`、卡模板的 `accent`）。
-- **素材库**：真人切片、产品录屏都得自己有或自己扒。repo 里只有占位素材。
-- **真实数据**：榜单 / 测评类的数字必须自己跑出来。
-  这套 skill 的硬规矩之一就是**数字绝不编**，它不会替你造数。
+- **真实数据**：榜单 / 测评类的数字必须是**真跑出来的实验结果**，抓取拿不到。
+  这套 skill 的硬规矩之一就是**数字绝不编**，它不会替你造数——没有真数据就别做这类选题。
 - **行业红线**：`skills/compliance-redlines/` 是按**中国内容平台 + 命理玄学题材**写的。
   换行业（医美 / 金融 / 教育…）红线完全不同，那份词表要重写。
 
@@ -315,9 +323,12 @@ codex exec --skip-git-repo-check -s workspace-write \
 
 ## 还没验证的部分（诚实留档）
 
-- `lib/rec-page.js` / `lib/render-card.js` 只过了语法检查，**没跑过真实站点**
-  （需要目标站 + 登录凭据）。
 - 克隆音（`voice_id` 私有）没测过，只测了三个系统音色。
+- `lib/render-card.js`（单张卡渲染）没单独跑过；不过同一条链路的
+  `lib/storyboard.js` 每次 `validate.sh` 都会真渲 5 张卡。
+
+`lib/rec-page.js` 已在真实站点上验过：登录 → 录屏 → 输出 720×1280 / 15.2s 的产品界面
+（密码只走环境变量注入，不进 argv 和日志）。
 
 `lib/gen-voice.mjs` 已在真实 MiniMax 接口上跑通（国际区，`presenter_male` /
 `female-tianmei` / `female-shaonv` 三个音色都出音），上面 demo 的配音就是这么生成的。

@@ -129,7 +129,17 @@ if (await startBtn.count().catch(() => 0)) {
 登录一次 → `storageState()` → 用它开一个**带 recordVideo 的新 context**，
 录出来就没有登录过程。**必须 `context.close()`**（不是只 `page.close()`）视频才 flush。
 
-模板：`lib/rec-page.js`
+模板：`lib/rec-page.js`。**已在真实站点上验过**这条链路（登录 → 复用 storageState →
+录屏 → 输出 720×1280），密码只从 `--pw-env` 指定的环境变量读，不进 argv（argv 会泄露到 `ps`）：
+
+```bash
+DEMO_LOGIN_PW='<密码>' node lib/rec-page.js \
+  --url "https://<站点>/app" --login-url "https://<站点>/login" \
+  --email "<测试账号>" --pw-env DEMO_LOGIN_PW \
+  --out footage/rec/app.webm --mobile --w 720 --h 1280 --scroll 8 --wait 6000
+```
+
+**所以产品素材不用人给** —— 给 URL + 测试账号，agent 自己录。
 
 ---
 

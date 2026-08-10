@@ -90,9 +90,10 @@ $REPO/lib/fit-vertical.sh footage/ext/x.mp4 work/v01.mp4 --dur 4.2 --ss 12
 
 ## 还没验证过的部分（诚实说明）
 
-- `rec-page.js` / `render-card.js` 只过了语法检查，**没跑过真实站点**
-  （需要凭据 + 目标站）。
 - 克隆音（`voice_id` 私有）没测过。
+- `render-card.js`（单张卡）没单独跑过；同链路的 `storyboard.js` 每次 validate 都真渲 5 张卡。
+
+`rec-page.js` 已在真实站点验过：登录 → 录屏 → 720×1280 / 15.2s 产品界面。
 
 `gen-voice.mjs` 已在真实 MiniMax 接口上跑通（国际区 `api.minimax.io`），
 三个系统音色的实测语速已回填进 `skills/topic-and-script/` 和 `skills/tts-voiceover/`。
