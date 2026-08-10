@@ -94,6 +94,14 @@ sys.exit(1 if bad else 0)
 PY
 [ $? -eq 0 ] && ok "结构 / 链接 / 泄密 全部通过" || fail=1
 
+# ---------------------------------------------------------------- 2.5
+sec "一致性（孤儿脚本 / 路由 / README 覆盖 / 旧说法复活）"
+if /usr/bin/python3 tests/check-consistency.py "$ROOT" >/tmp/av-cons.log 2>&1; then
+  ok "$(tail -1 /tmp/av-cons.log | sed 's/^ *//')"
+else
+  bad "一致性检查失败"; grep '✗' /tmp/av-cons.log | sed 's/^/  /'
+fi
+
 # ---------------------------------------------------------------- 3
 sec "脚本可执行性 + 语法"
 while IFS= read -r f; do

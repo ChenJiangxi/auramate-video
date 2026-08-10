@@ -59,9 +59,15 @@ presenter_male @1.30（6.35 字/秒·含标点）：  45s ≈ 285 字   60s ≈ 
 
 无论走哪条，这几个 skill 一定会用上：
 
-```
-tts-voiceover  →  subtitles  →  ffmpeg-cookbook  →  cover-thumbnail  →  delivery
-```
+| skill | 什么时候翻 |
+|---|---|
+| `skills/topic-and-script/` | 写选题和口播稿（决定 80%，别跳） |
+| `skills/tts-voiceover/` | 配音，时间轴的源头 |
+| `skills/subtitles/` | 烧字幕 |
+| `skills/ffmpeg-cookbook/` | 任何 ffmpeg 参数记不清时（竖版化 / 变速 / concat / 报错速查） |
+| `skills/cover-thumbnail/` | 出封面（爆款风，不是学术风） |
+| `skills/quality-gate/` | 交付前自审 |
+| `skills/delivery/` | 打交付包 |
 
 ---
 
@@ -231,7 +237,7 @@ tts-voiceover  →  subtitles  →  ffmpeg-cookbook  →  cover-thumbnail  →  
 逐条打勾，有一条不过就别发：
 
 ```
-[ ] 时长在目标区间（竖版 60–90s）
+[ ] 时长在目标区间（竖版 40–60s，实测交付区间）
 [ ] 分辨率 / 帧率正确（1080×1920 / 30fps），ffprobe 实测过
 [ ] 有音轨，且响度够（配音默认 +4dB）
 [ ] 字幕条数 == 口播句子拆分数，没有漏行

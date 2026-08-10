@@ -1,6 +1,6 @@
 ---
 name: vertical-shortform
-description: 竖版短视频（抖音/小红书 1080×1920，60–90s）的完整执行管线——从 clips.json 到交付包。包含逐拍编码、audio-driven 时间轴、concat、mux 的可直接复制脚本。触发词：竖版、抖音、小红书、短视频、60秒、90秒、出一条片、混剪成片。
+description: 竖版短视频（抖音/小红书 1080×1920，40–60s）的完整执行管线——从 clips.json 到交付包。包含逐拍编码、audio-driven 时间轴、concat、mux 的可直接复制脚本。触发词：竖版、抖音、小红书、短视频、60秒、90秒、出一条片、混剪成片。
 ---
 
 # vertical-shortform — 竖版短视频完整管线
@@ -301,7 +301,7 @@ lib/package-delivery.sh --video <slug>-v3.mp4 --cover cover.png --caption captio
 ```
 [ ] 合规 linter 无 BLOCK（口播稿定稿时 + 交付前各一次）
 [ ] topic.md 写了钩子 / 为什么能火 / 落到什么功能
-[ ] clips.json 字数对得上目标时长，无 "ta"，单句 ≤30 字
+[ ] clips.json 字数对得上目标时长，无 "ta"，单拍不超过 ~10s
 [ ] 镜头表列全，每句都有画面来源
 [ ] 音色采样给人类挑过
 [ ] audio/*.mp3 全部非空，verify-audio.sh 过
@@ -324,4 +324,7 @@ lib/package-delivery.sh --video <slug>-v3.mp4 --cover cover.png --caption captio
 | 最后一拍被切掉 | `-shortest` 且音轨比视频长 → 检查最后一拍 `T` 是否算漏 GAP |
 | 某一拍黑屏 | 素材比 `T_cNN` 短 → 换素材或 `setpts` 放慢 |
 | 成片没声音 | 逐拍编码忘了 `-an`，或 mux 少了 `-map` |
+| build 报「shots.tsv 里没有 cNN」 | 加了句子但 shots.tsv 没跟着加行 | `make-placeholders.sh --footage` 会补齐；手写时一句一行别漏 |
+| `--out` 写相对路径结果文件跑到奇怪的地方 | 相对路径按**当前工作目录**解，不是按 `--project` | 要么用绝对路径，要么先 `cd` 到你想要的输出目录 |
+| 配音是占位音却一路通过审计 | `verify-audio` 只看时长和响度 | 留意 `audio/.placeholder`；`audit-video.sh` 会点名 |
 | 字幕整体偏移固定值 | build 和 gen-subs 的 GAP 不一致 |
