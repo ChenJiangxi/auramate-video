@@ -12,23 +12,10 @@
 
 ## Demo
 
-<p align="center">
-  <img src="docs/demo/demo.gif" width="288" alt="demo">
-</p>
+<video src="https://cdn.jsdelivr.net/gh/ChenJiangxi/auramate-video@main/docs/demo/demo.mp4" controls width="288"></video>
 
-<p align="center">
-  <a href="docs/demo/demo.mp4"><img src="docs/demo/poster.jpg" width="200" alt="看完整版"></a><br>
-  <b><a href="docs/demo/demo.mp4">▶ 点这里看完整版（55s · 1080×1920 · 带配音）</a></b>
-</p>
-
-> 上面的 GIF 是 6 个关键镜头各截 2 秒拼的精编，**没有声音**——
-> GitHub 的 README 不能内联播放仓库里的 mp4
-> （`raw.githubusercontent` 对 mp4 返回 `application/octet-stream` + `nosniff`，
-> `<video>` 标签取不到流）。带配音的完整版点上面那个封面。
->
-> 想要 README 里直接出播放器：把 `docs/demo/demo.mp4` 拖进本仓库的任意
-> issue 评论框，GitHub 会生成一个 `user-attachments` 链接，把那个链接贴进 README
-> 就会渲染成带声音的播放器。这一步需要网页端操作。
+<sub>播放器出不来的话：[直接看 mp4](https://cdn.jsdelivr.net/gh/ChenJiangxi/auramate-video@main/docs/demo/demo.mp4) ·
+[无声 GIF 预览](docs/demo/demo.gif)</sub>
 
 ![storyboard](docs/demo/storyboard.png)
 
@@ -243,3 +230,17 @@ key 走环境变量，repo 里只有占位符 —— 见 `SECRETS-CHECKLIST.md`�
 不要新开一个 `NOTES.md`，坑必须落在**会被读到的那个 skill 里**。
 
 改完跑 `./tests/validate.sh`，全绿才能推。
+
+### 换了 demo 视频之后
+
+README 顶部的播放器走 jsDelivr（`cdn.jsdelivr.net/gh/...@main/...`），因为
+**GitHub 自己不能内联播放仓库里的 mp4** —— `raw.githubusercontent` 对 mp4 返回
+`application/octet-stream` + `nosniff`，浏览器拿不到流；jsDelivr 返回的是
+`video/mp4`，所以能播。（`<video>` 标签本身不会被 GitHub 过滤，实测过；
+被过滤的只有 `poster` 属性。）
+
+jsDelivr 对 `@main` 有 12 小时缓存，换了视频要手动刷一下：
+
+```bash
+./docs/demo/purge-cdn.sh      # 推送之后跑一次，CDN 立刻拿新文件
+```
