@@ -26,7 +26,7 @@ AP.add_argument('--line1', required=True)
 AP.add_argument('--line2', default='', help='强调行，用高亮色')
 AP.add_argument('--sub', default='')
 AP.add_argument('--tag', default='')
-AP.add_argument('--font', default='/System/Library/Fonts/STHeiti Medium.ttc')
+AP.add_argument('--font', default=None, help='字体文件。不给就自动找本机中文字体')
 AP.add_argument('--font-index', type=int, default=0)
 AP.add_argument('--size-big', type=int, default=154)
 AP.add_argument('--size-sub', type=int, default=58)
@@ -70,11 +70,17 @@ base = Image.alpha_composite(base, ov)
 draw = ImageDraw.Draw(base)
 
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from _fonts import find_font                       # noqa: E402
+
+FONT_PATH = find_font('sans', A.font)
+
+
 def font(sz):
     try:
-        return ImageFont.truetype(A.font, sz, index=A.font_index)
+        return ImageFont.truetype(FONT_PATH, sz, index=A.font_index)
     except OSError:
-        sys.exit(f'字体打不开: {A.font}')
+        sys.exit(f'字体打不开: {FONT_PATH}')
 
 
 def center(y, text, f, fill, sw=8):

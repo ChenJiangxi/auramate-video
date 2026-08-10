@@ -24,8 +24,8 @@ AP.add_argument('--patch-font-size', type=int, default=30)
 AP.add_argument('--bug-w', type=int, default=1080)
 AP.add_argument('--bug-h', type=int, default=110)
 AP.add_argument('--bug-font-size', type=int, default=40)
-AP.add_argument('--latin-font', default='/System/Library/Fonts/Helvetica.ttc')
-AP.add_argument('--cjk-font', default='/System/Library/Fonts/STHeiti Medium.ttc')
+AP.add_argument('--latin-font', default=None, help='拉丁字体，不给就自动找')
+AP.add_argument('--cjk-font', default=None, help='中文字体，不给就自动找')
 A = AP.parse_args()
 
 try:
@@ -41,7 +41,10 @@ except Exception:
     sys.exit('--pill-rgb 格式应为 R,G,B（如 14,11,19）')
 
 # ---- 1. URL 补丁 ----
-hel = ImageFont.truetype(A.latin_font, A.patch_font_size)
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from _fonts import find_font                       # noqa: E402
+
+hel = ImageFont.truetype(find_font('latin', A.latin_font), A.patch_font_size)
 patch = Image.new('RGBA', (A.patch_w, A.patch_h), PILL + (255,))
 pd = ImageDraw.Draw(patch)
 pd.text((12, A.patch_h // 2), A.url, font=hel, fill=(206, 206, 208, 255), anchor='lm')
@@ -52,7 +55,7 @@ print('  合成用法: -filter_complex "[0:v][1:v]overlay=<x>:<y>"   坐标每�
 
 # ---- 2. 品牌角标 ----
 if A.brand:
-    zh = ImageFont.truetype(A.cjk_font, A.bug_font_size, index=0)
+    zh = ImageFont.truetype(find_font('sans', A.cjk_font), A.bug_font_size, index=0)
     W, H = A.bug_w, A.bug_h
     bug = Image.new('RGBA', (W, H), (0, 0, 0, 0))
     bd = ImageDraw.Draw(bug)

@@ -64,6 +64,17 @@ if [ -z "$PY" ] && [ "$CHECK" = 0 ] && command -v python3 >/dev/null; then
 fi
 [ -n "$PY" ] && ok "python3 + Pillow ($PY)" || no "python3 + Pillow 缺失 —— 字幕/封面/图片补丁都不能用"
 
+if [ -n "$PY" ]; then
+  F="$("$PY" "$ROOT/lib/_fonts.py" 2>/dev/null | awk '/sans/{print $3}')"
+  if [ -n "$F" ] && [ "$F" != "找不到" ]; then ok "中文字体 $F"
+  else
+    no "找不到中文字体 —— 字幕和封面会渲成一堆方框"
+    echo "     Debian/Ubuntu: sudo apt-get install -y fonts-noto-cjk"
+    echo "     Fedora/RHEL  : sudo dnf install -y google-noto-sans-cjk-fonts"
+    echo "     或设 VIDEO_CJK_FONT=/path/to/font.ttf"
+  fi
+fi
+
 # ---------------------------------------------------------------- 可选
 if [ "$MINIMAL" = 0 ]; then
   say "可选（对应具体能力）"
@@ -95,7 +106,7 @@ c=$(probe https://www.youtube.com/); [ "${c:-000}" != "000" ] && ok "youtube 可
 say "能力汇总（这才是你关心的）"
 cap(){ if eval "$2"; then ok "$1"; else no "$1 —— $3"; fi }
 cap "剪辑合成（build / 竖版化 / 交付）" 'command -v ffmpeg >/dev/null && command -v ffprobe >/dev/null' "装 ffmpeg"
-cap "字幕 / 封面 / 图片补丁"           '[ -n "'"$PY"'" ]' "装 python3 + Pillow"
+cap "字幕 / 封面 / 图片补丁"           '[ -n "'"$PY"'" ] && [ -n "'"${F:-}"'" ]' "装 python3 + Pillow + 中文字体"
 cap "占位配音（无需任何 key）"          'command -v ffmpeg >/dev/null' "装 ffmpeg"
 cap "真配音（MiniMax）"                'command -v node >/dev/null && [ -n "${MINIMAX_API_KEY:-}" ]' "装 node + 设 MINIMAX_API_KEY（见 SECRETS-CHECKLIST.md）"
 cap "产品录屏"                          'node -e "require(\"playwright\")" 2>/dev/null' "npm i playwright && npx playwright install chromium，另需目标站凭据"

@@ -28,7 +28,8 @@ AP.add_argument('--w', type=int, default=1080)
 AP.add_argument('--h', type=int, default=1920)
 AP.add_argument('--y', type=int, default=1400, help='字幕基线 Y。竖版下三分之一 ≈1400，别贴底')
 AP.add_argument('--font-size', type=int, default=60)
-AP.add_argument('--font', default='/System/Library/Fonts/STHeiti Medium.ttc')
+AP.add_argument('--font', default=None,
+                help='字体文件。不给就自动找本机的中文字体（见 lib/_fonts.py）')
 AP.add_argument('--font-index', type=int, default=0)
 AP.add_argument('--gap', type=float, default=0.25)
 AP.add_argument('--max-chars', type=int, default=0,
@@ -58,10 +59,14 @@ except ImportError:
     sys.exit('缺 Pillow。macOS 上用 /usr/bin/python3 跑这个脚本（系统 python 自带 Pillow）；'
              '或 pip install Pillow')
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from _fonts import find_font                       # noqa: E402
+
+FONT_PATH = find_font('sans', A.font)
 try:
-    FONT = ImageFont.truetype(A.font, A.font_size, index=A.font_index)
+    FONT = ImageFont.truetype(FONT_PATH, A.font_size, index=A.font_index)
 except OSError:
-    sys.exit(f'字体打不开: {A.font}\n  macOS 中文可用: /System/Library/Fonts/STHeiti Medium.ttc')
+    sys.exit(f'字体打不开: {FONT_PATH}')
 
 
 def dur(path):

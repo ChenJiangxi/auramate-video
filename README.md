@@ -144,6 +144,42 @@ codex exec --skip-git-repo-check -s workspace-write \
 
 约 100KB / 粗估 5 万 tokens，脚本路径已经是绝对路径，整份贴进 context 就能开工。
 
+### 别人要用，需要自己准备什么
+
+把这个 repo 交给另一个人 / 另一个 agent，**除了 clone 之外还要补四样东西**。
+前两样 `setup.sh` 会自动查并告诉你怎么补，后两样只能人来给。
+
+**① 机器上的工具**（`./setup.sh` 尽量自动装）
+
+`ffmpeg`（带 libx264）· `python3 + Pillow` · **中文字体** ·（按需）`node + playwright + chromium` · `yt-dlp`
+
+> 中文字体是最容易被忽略的一条：Linux 上不装的话，字幕和封面会渲成**一堆方框**。
+> 脚本会自动在 macOS / Linux / Windows 的常见路径里找，找不到会直接告诉你装哪个包
+> （`fonts-noto-cjk` 之类），也可以用 `VIDEO_CJK_FONT` 或 `--font` 指定。
+
+**② 凭据**（都走环境变量，repo 里只有占位符，见 `SECRETS-CHECKLIST.md`）
+
+| 变量 | 干什么用 | 不给会怎样 |
+|---|---|---|
+| `MINIMAX_API_KEY` | 真配音 | 退回占位配音，全流程照跑 |
+| `MINIMAX_API_BASE` | 国内区要改成 `api.minimaxi.com` | 用错区域报 `2049` |
+| 克隆音 `voice_id` | 用「本人声音」旁白 | 用系统音色，不影响 |
+| 产品站 URL + 测试账号密码 | 录自家界面 | 录不了产品画面，可以只用外部素材和卡 |
+
+**③ 内容侧的东西（skill 给不了）**
+
+- **品牌信息**：品牌名 / 网址 / 角标文案 / 主色。脚本都有参数
+  （`make-brand-assets.py --url --brand`、`make-cover.py --accent`、卡模板的 `accent`）。
+- **素材库**：真人切片、产品录屏都得自己有或自己扒。repo 里只有占位素材。
+- **真实数据**：榜单 / 测评类的数字必须自己跑出来。
+  这套 skill 的硬规矩之一就是**数字绝不编**，它不会替你造数。
+- **行业红线**：`skills/compliance-redlines/` 是按**中国内容平台 + 命理玄学题材**写的。
+  换行业（医美 / 金融 / 教育…）红线完全不同，那份词表要重写。
+
+**④ Codex 侧的启动参数**（见上一节，非交互跑必须关审批、按 CLI 版本选模型）
+
+---
+
 ### ⚠ skill 给的是知识和脚本，不是能力
 
 **把 skill 丢给一个空白 agent（codex / 别的 CLI），它不会自动就有录屏和配音。**
