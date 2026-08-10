@@ -190,6 +190,15 @@ enc_celeb(){ ffmpeg -nostdin -y -v error -ss "$4" -t "$2" -i "$1" -vf \
 # 用法: enc_celeb footage/ext/ai-deepseek.mp4 $T_c01 work/v01.mp4 2   # 最后一个 = 起始秒
 ```
 
+**B1. 产品录屏用 `motion`（带镜头运动，产品片的主力）**
+
+```
+c05	motion	footage/rec/report.webm	6	--move punch-in --to 620:900:50:260
+```
+
+第 5 列原样传给 `lib/motion.sh`。静态框放录屏字读不清也呆板，
+**推拉把注意力带过去**才是产品演示片的样子，见 `skills/product-demo/` 三·五。
+
 **B2. 拿不准源多大就用 `fit`（推荐默认）**
 
 ```
@@ -333,6 +342,7 @@ lib/package-delivery.sh --video <slug>-v3.mp4 --cover cover.png --caption captio
 | 音画越到后面越不同步 | 音轨没 `apad`+`atrim` 到 `T_cNN` |
 | 最后一拍被切掉 | `-shortest` 且音轨比视频长 → 检查最后一拍 `T` 是否算漏 GAP |
 | 某一拍黑屏 | 素材比 `T_cNN` 短 → 换素材或 `setpts` 放慢 |
+| 产品段呆板、字读不清 | 用了静态框 | 改 `motion` 编码器加推拉 |
 | 某几拍明显糊 | 源比目标窄，被升采样拉大了 | build 输出里看「放大N×」；>1.3× 改用 `fit`，根治靠提高录制分辨率 |
 | 成片没声音 | 逐拍编码忘了 `-an`，或 mux 少了 `-map` |
 | build 报「shots.tsv 里没有 cNN」 | 加了句子但 shots.tsv 没跟着加行 | `make-placeholders.sh --footage` 会补齐；手写时一句一行别漏 |

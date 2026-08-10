@@ -176,6 +176,42 @@ fi
 rm -rf "$FX"
 fi
 
+# ---------------------------------------------------------------- 3.34
+if [ "$SKIP_RENDER" = 1 ]; then
+  sec "镜头运动（已跳过 --skip-render）"
+else
+sec "镜头运动 motion.sh"
+MX="$ROOT/tests/fixtures/mo"; rm -rf "$MX"; mkdir -p "$MX"
+ffmpeg -nostdin -y -v error -f lavfi -i "testsrc2=size=720x1280:rate=30:duration=8" \
+  -c:v libx264 -crf 24 -pix_fmt yuv420p "$MX/src.mp4" 2>/dev/null
+mofail=0
+for m in "punch-in --to 300:400:200:300" "pull-out --from 300:400:200:300" \
+         "pan --from 720:1280:0:0 --to 300:400:200:600" "kenburns" "hold --zoom 1.4"; do
+  set -- $m; name="$1"
+  if "$ROOT/lib/motion.sh" "$MX/src.mp4" "$MX/$name.mp4" --dur 2 --ss 1 --move $m >/tmp/av-mo.log 2>&1; then
+    w=$(ffprobe -v error -select_streams v:0 -show_entries stream=width  -of csv=p=0 "$MX/$name.mp4")
+    h=$(ffprobe -v error -select_streams v:0 -show_entries stream=height -of csv=p=0 "$MX/$name.mp4")
+    [ "$w" = 1080 ] && [ "$h" = 1920 ] || { bad "motion $name → ${w}×${h}"; mofail=1; }
+  else bad "motion $name 失败"; sed -n '1,6p' /tmp/av-mo.log; mofail=1; fi
+done
+[ "$mofail" = 0 ] && ok "五种运动都出 1080×1920"
+# 真的在动：首尾两帧必须不同（不动的话说明表达式没生效）
+ffmpeg -v error -y -ss 0.1 -i "$MX/punch-in.mp4" -frames:v 1 "$MX/a.png" 2>/dev/null
+ffmpeg -v error -y -ss 1.9 -i "$MX/punch-in.mp4" -frames:v 1 "$MX/b.png" 2>/dev/null
+sa=$(stat -f%z "$MX/a.png" 2>/dev/null || stat -c%s "$MX/a.png")
+sb=$(stat -f%z "$MX/b.png" 2>/dev/null || stat -c%s "$MX/b.png")
+[ "$sa" != "$sb" ] && ok "punch-in 首尾帧不同（镜头确实在动）" || bad "首尾帧一样，运动没生效"
+# 接进管线：shots.tsv 用 motion 编码器
+printf 'c01\tmotion\t%s\t1\t--move punch-in --to 300:400:200:300\n' "$MX/src.mp4" > "$MX/shots.tsv"
+printf '[{"name":"c01","text":"测试一句口播。"}]\n' > "$MX/clips.json"
+"$ROOT/lib/make-placeholders.sh" "$MX" >/dev/null 2>&1
+if "$ROOT/lib/build-vertical.sh" --project "$MX" --shots "$MX/shots.tsv" --out "$MX/o.mp4" >/tmp/av-mo2.log 2>&1; then
+  ok "shots.tsv 的 motion 编码器接通了"
+else bad "motion 编码器在管线里失败"; sed -n '1,10p' /tmp/av-mo2.log; fi
+rm -rf "$MX"
+fi
+
+
 # ---------------------------------------------------------------- 3.35
 if [ "$SKIP_RENDER" = 1 ]; then
   sec "产品录屏工具（已跳过 --skip-render）"

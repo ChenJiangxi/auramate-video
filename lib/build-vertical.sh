@@ -13,7 +13,9 @@
 # 编码器:
 #   card   静态卡/已竖版渲染物 —— 直接 scale 铺满
 #   full   竖版录屏/竖版素材   —— scale + unsharp 锐化（**不限制放大倍数**，源要够清晰）
-#   fit    不确定源多大就用它 —— 转交 fit-vertical.sh，自动限制放大倍数防糊（推荐默认）
+#   fit    不确定源多大就用它 —— 转交 fit-vertical.sh，自动限制放大倍数防糊
+#   motion 带镜头运动的录屏 —— 转交 motion.sh，第5列写它的参数，例如
+#          "--move punch-in --to 620:900:50:260"（产品演示片的主力，静态框字读不清）
 #   celeb  横屏真人切片        —— 模糊背景垫底 + 主体等比居中
 #   patch  录屏 + 图片补丁     —— 第5列 = "补丁图:x:y:crop_w:crop_h:crop_x:pad_y"
 #
@@ -108,6 +110,16 @@ enc_full(){ "$FF" -nostdin -y -v error -ss "$4" -t "$2" -i "$1" \
 # 注意：别把 fit-vertical 的输出直接管道给带 exit 的 awk —— awk 提前退出会给上游
 # 发 SIGPIPE，配合 set -o pipefail + set -e 会把整个 build 静默干掉（踩过）。
 # 先整段收进变量，再在变量上做提取。
+# 镜头运动：第5列原样当参数传给 motion.sh
+enc_motion(){
+  local out
+  # shellcheck disable=SC2086
+  out="$("$HERE_LIB/motion.sh" "$1" "$3" --dur "$2" --ss "$4" \
+           --out-w "$W" --out-h "$H" --fps "$FPS" --crf "$CRF" ${5:-} 2>&1)" || {
+    echo "$out" >&2; return 1; }
+  FITNOTE="$(printf '%s\n' "$out" | grep -m1 '→' | sed 's/^ *//')"
+}
+
 enc_fit(){
   local out
   out="$("$HERE_LIB/fit-vertical.sh" "$1" "$3" --dur "$2" --ss "$4" \
@@ -141,6 +153,7 @@ for name in "${CLIPS[@]}"; do
     card)  enc_card  "${SRC[$i]}" "${TS[$i]}" "$o";;
     full)  enc_full  "${SRC[$i]}" "${TS[$i]}" "$o" "${SS[$i]}";;
     fit)   enc_fit   "${SRC[$i]}" "${TS[$i]}" "$o" "${SS[$i]}";;
+    motion) enc_motion "${SRC[$i]}" "${TS[$i]}" "$o" "${SS[$i]}" "${EXTRA[$i]}";;
     celeb) enc_celeb "${SRC[$i]}" "${TS[$i]}" "$o" "${SS[$i]}";;
     patch) enc_patch "${SRC[$i]}" "${TS[$i]}" "$o" "${SS[$i]}" "${EXTRA[$i]}";;
     *) echo "  ✗ 未知编码器 '${KIND[$i]}' ($name)" >&2; exit 4;;
@@ -151,7 +164,7 @@ for name in "${CLIPS[@]}"; do
   # 清晰度账：源比目标窄多少就要放大多少。fit 编码器会自己封顶，所以不按这个口径警告。
   sw="$("$FP" -v error -select_streams v:0 -show_entries stream=width -of csv=p=0 "${SRC[$i]}" 2>/dev/null | head -1)"
   up="$(awk -v s="${sw:-0}" -v w="$W" 'BEGIN{ if (s>0) printf "%.2f", w/s; else print "?" }')"
-  if [ "${KIND[$i]}" = fit ]; then
+  if [ "${KIND[$i]}" = fit ] || [ "${KIND[$i]}" = motion ]; then
     printf "  %s  %-5s  %ss  源宽%s  %s\n" "$name" "${KIND[$i]}" "$got" "${sw:-?}" "${FITNOTE:-已封顶}"
   else
     mark="$(awk -v u="${up}" 'BEGIN{ if (u=="?") print ""; else if (u>2.0) print "  ✗ 太糊，换高分辨率源（或改用 fit 编码器）"; else if (u>1.3) print "  ⚠ 偏糊（可改用 fit）"; else print "" }')"
