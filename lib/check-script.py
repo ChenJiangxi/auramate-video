@@ -99,7 +99,7 @@ if clips:
     h = (clips[0].get('text') or '')
     has_person = bool(re.search(r'[他她你我们那这][^\w]?|老板|朋友|对象|同事', h))
     has_num = bool(re.search(r'[0-9一二三四五六七八九十百千万第两半]', h))
-    has_verb = bool(re.search(r'点开|翻|查|问|算|发|回|考|让|做|买|试|等|删|加|刷|存|欠|拼|冲', h))
+    has_verb = bool(re.search(r'点开|翻|查|问|算|发|回|考|让|做|买|试|等|删|加|刷|存|欠|拼|冲|输|盯|排|测|填', h))
     missing = [n for n, ok in (('具体的人', has_person), ('具体数字/时间', has_num), ('具体动作', has_verb)) if not ok]
     if missing:
         soft.append('钩子缺少 ' + ' / '.join(missing) +
