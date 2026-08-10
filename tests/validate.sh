@@ -401,6 +401,21 @@ if /usr/bin/python3 lib/check-script.py --project examples/hello-vertical --targ
   ok "样例工程脚本通过"
 else bad "样例工程脚本有硬错误"; grep '✗' /tmp/av-sex.log; fi
 
+# ---------------------------------------------------------------- 3.45
+sec "人味儿 linter"
+HX="$ROOT/tests/fixtures/human"; rm -rf "$HX"; mkdir -p "$HX"
+cat > "$HX/clips.json" <<'JEOF'
+[{"name":"c01","text":"这不是一次简单的升级——而是一次彻底的重构。"},
+ {"name":"c02","text":"它标志着我们赋能行业的匠心时刻。"},
+ {"name":"c03","text":"让我们看看结果。未来可期。"}]
+JEOF
+/usr/bin/python3 lib/check-humanness.py --project "$HX" >/tmp/av-hu.log 2>&1 || true
+nh=$(grep -c '^  ! ' /tmp/av-hu.log || true)
+[ "$nh" -ge 4 ] && ok "AI 腔样本被挑出 $nh 处句式痕迹" || { bad "只挑出 $nh 处，词表可能坏了"; cat /tmp/av-hu.log; }
+/usr/bin/python3 lib/check-humanness.py --project examples/hello-vertical >/tmp/av-hu2.log 2>&1 || true
+grep -q '句式痕迹 0 处' /tmp/av-hu2.log && ok "样例工程无句式痕迹（无误报）" || { bad "样例被误报"; grep '^  ! ' /tmp/av-hu2.log; }
+rm -rf "$HX"
+
 # ---------------------------------------------------------------- 3.5
 sec "合规 linter"
 if /usr/bin/python3 lib/check-compliance.py --project tests/fixtures/compliance-bad >/tmp/av-cbad.log 2>&1; then

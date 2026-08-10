@@ -14,7 +14,7 @@
 
 <video src="https://cdn.jsdelivr.net/gh/ChenJiangxi/auramate-video@main/docs/demo/demo.mp4" controls width="300"></video>
 
-**26.6s · 1080×1920 · 真配音 · 全程有声** —— 播放器出不来就
+**28.1s · 1080×1920 · 真配音 · 全程有声** —— 播放器出不来就
 [直接看 mp4](https://cdn.jsdelivr.net/gh/ChenJiangxi/auramate-video@main/docs/demo/demo.mp4)。
 
 ![storyboard](docs/demo/storyboard.png)
@@ -24,10 +24,12 @@
 
 ### 这条 demo 是怎么来的
 
-选题从**用户的真实动作**切入，不是产品自述：
+口播稿有「我」，不是解说词：
 
-> 你把生日输进去，三秒，出来八个字。然后你盯着这八个字，一个也看不懂。
-> —— 排出它们其实不难，万年历翻一下就有；难的是下一句：这跟你这个人有什么关系。
+> 输个生日进去，三秒，出来八个字。
+> 我第一次看见的时候，一个也不认识。
+> 后来才知道，排这八个字不难。万年历翻一下就有。
+> 难的是下一句。它跟我到底有什么关系。
 
 八拍逐句对应画面（`shots.tsv` 第 6 列就是这么写的）：整页 → 推到四柱八个字 →
 拉回全貌 → 推向成段解读 → 日主五行区 → 沿依据下移 → 灵体追问 → 品牌收尾。
@@ -45,6 +47,11 @@
 **二、合成前必须逐拍核对画面。** agent 看不见画面，按秒数猜框必然「说 A 显 B」。
 `lib/preview-shots.sh` 在合成**之前**抽帧拼图 + 并排打印「台词 ↔ 画面」，
 `shots.tsv` 第 6 列强制写清这拍要显什么。
+
+**三、技术全绿的稿子照样是讲解员腔。** 上一版八句里没有一个「我」、
+没有一个语气词 —— 等于没人站在这段话背后。`lib/check-humanness.py`
+把这两个信号和 AI 句式痕迹（破折号、「不是X而是Y」、意义拔高、宣传腔…）
+一起查，接在 `check-script` 和 `check-compliance` 中间。
 
 ---
 
@@ -149,7 +156,7 @@
 |---|---|
 | **做一条抖音竖版片** | `skills/video-master/` → `skills/topic-and-script/` → `skills/vertical-shortform/` |
 | **只是想先跑通看看** | 上面「卡模板长什么样」那段命令 → `references/zero-context-walkthrough.md` |
-| **想选题 / 写口播稿** | `skills/topic-and-script/`（角度库 + 钩子句式 + 实测语速） |
+| **想选题 / 写口播稿** | `skills/topic-and-script/`（角度库 + 钩子句式 + 实测语速 + 人味儿关） |
 | **确认这题材能不能做** | `skills/compliance-redlines/`（先过这关，再谈别的） |
 | **扒外部真实素材** | `skills/real-clip-mashup/` → `lib/fetch-clip.sh` → `lib/fit-vertical.sh` |
 | **录自家产品界面** | `skills/product-demo/` → `lib/rec-page.js` → `lib/motion.sh`（推拉）→ `lib/wrap-chrome.sh` |

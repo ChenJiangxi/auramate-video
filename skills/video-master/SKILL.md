@@ -78,7 +78,8 @@ presenter_male @1.30（6.35 字/秒·含标点）：  45s ≈ 285 字   60s ≈ 
 ```
 ① 选题     → topic.md      一句话钩子 + 为什么这条能火 + 落到什么产品功能
 ② 脚本     → clips.json    分句口播稿（每句 = 一个镜头 = 一段配音）
-  ⤷ 脚本自检  check-script.py    —— 句长/一拍多久/ta/钩子具体性
+  ⤷ 脚本自检  check-script.py     —— 句长/一拍多久/ta/钩子具体性
+  ⤷ 人味儿    check-humanness.py  —— 没有「我」、没有语气词 = 讲解员腔
   ⤷ 合规闸门  check-compliance.py —— 定稿前必过，有 BLOCK 就别往下做
 ③ 素材     → footage/      真实切片 / 录屏 / 渲染卡，每句都要有对应画面
 ④ 配音     → audio/cNN.mp3 每句一个文件，时长驱动后面所有时间轴
