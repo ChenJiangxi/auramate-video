@@ -12,9 +12,23 @@
 
 ## Demo
 
-**成片（点开看）→ [`docs/demo/demo.mp4`](docs/demo/demo.mp4)** · 54.6s · 1080×1920 · 真配音
+<p align="center">
+  <img src="docs/demo/demo.gif" width="288" alt="demo">
+</p>
 
-![demo](docs/demo/demo.gif)
+<p align="center">
+  <a href="docs/demo/demo.mp4"><img src="docs/demo/poster.jpg" width="200" alt="看完整版"></a><br>
+  <b><a href="docs/demo/demo.mp4">▶ 点这里看完整版（55s · 1080×1920 · 带配音）</a></b>
+</p>
+
+> 上面的 GIF 是 6 个关键镜头各截 2 秒拼的精编，**没有声音**——
+> GitHub 的 README 不能内联播放仓库里的 mp4
+> （`raw.githubusercontent` 对 mp4 返回 `application/octet-stream` + `nosniff`，
+> `<video>` 标签取不到流）。带配音的完整版点上面那个封面。
+>
+> 想要 README 里直接出播放器：把 `docs/demo/demo.mp4` 拖进本仓库的任意
+> issue 评论框，GitHub 会生成一个 `user-attachments` 链接，把那个链接贴进 README
+> 就会渲染成带声音的播放器。这一步需要网页端操作。
 
 ![storyboard](docs/demo/storyboard.png)
 
