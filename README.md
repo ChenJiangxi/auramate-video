@@ -12,137 +12,46 @@
 
 ## Demo
 
-<video src="https://cdn.jsdelivr.net/gh/ChenJiangxi/auramate-video@main/docs/demo/demo.mp4" controls width="288"></video>
+<video src="https://cdn.jsdelivr.net/gh/ChenJiangxi/auramate-video@main/docs/demo/demo.mp4" controls width="300"></video>
 
-<sub>播放器出不来的话：[直接看 mp4](https://cdn.jsdelivr.net/gh/ChenJiangxi/auramate-video@main/docs/demo/demo.mp4) ·
-[无声 GIF 预览](docs/demo/demo.gif)</sub>
+**28.7s · 1080×1920 · 真配音 · 全程有声** —— 播放器出不来就
+[直接看 mp4](https://cdn.jsdelivr.net/gh/ChenJiangxi/auramate-video@main/docs/demo/demo.mp4)。
 
 ![storyboard](docs/demo/storyboard.png)
 
-这条不是拿模板凑的演示片，是**照着一条真实交付过的选题（「AI 考中国命理」）
-用这个 repo 的脚本从头跑出来的**——配音是这次**现调 MiniMax 接口**生成的
-（`presenter_male` @1.28，9 句 52.7s），产品录屏和榜单数据都是真的，
-字幕按每句配音的实测时长算，成片 1080×1920 / CRF 23。
+<sub>八拍逐帧。上面还有一张 [12 秒的无声 GIF 预览](docs/demo/demo.gif)，
+**GIF 没有音轨**，要听配音请看上面的播放器。</sub>
 
-> 有几拍的产品录屏源只有 540–720 宽，升到 1080 会糊。这类拍用 `fit` 编码器
-> （自动限制放大倍数、必要时改成模糊垫底），而不是闷头拉满。
-> `audit-video.sh` 的 ⑤b 会把每一拍的放大倍数逐条列出来 —— 根治办法是**按目标分辨率
-> 倒推录制分辨率**（要在 1080 宽做 1.5× 特写，源至少 1620 宽），见 `skills/product-demo/`。
+### 这条 demo 是怎么来的
 
-```bash
-# 配音这步长这样（key 从环境变量读，绝不进 argv）
-MINIMAX_API_KEY=<你的key> node lib/gen-voice.mjs \
-    --clips clips.json --out audio/ --voice presenter_male --speed 1.28
-```
+选题：**排盘是查表，解读才是难的**。（AI 的价值不在替你算干支——那是万年历的活儿——
+而在把一堆符号读成前后自洽的人话。）
 
-镜头构成（`shots.tsv` 九行，就是这么写的）：
+用这个 repo 的脚本从头跑的：真配音（现调 MiniMax，`presenter_male` @1.28）、
+真产品录屏、**每一拍都带镜头运动**（punch-in / pan / kenburns），
+字幕按每句配音实测时长算。
 
-| 拍 | 类型 | 画面 |
+**逐拍「说什么显什么」**，这是被打回最多的一类问题，所以逐条列出来：
+
+| 拍 | 台词 | 画面 |
 |---|---|---|
-| c01 | 外部录屏切片 | 大模型排八字的真实输出 |
-| c02–c04 | 数据卡 | 命理大赛真题实测榜（**真跑的分数**，不是编的） |
-| c05 | 产品录屏 + 补丁 | 命盘页，地址栏 PIL 打补丁盖成 `auramate.net`，套浏览器壳 |
-| c06 | 产品录屏 | 专业报告（日主 / 五行 / 喜用神） |
-| c07–c08 | 产品录屏 | AWAKE 态灵体 + 功能页 |
-| c09 | 产品录屏 | 灵体流式对话收尾 |
+| c01 | 一张万年历就能查出来 | 报告页全貌：命盘总览 + 四柱 |
+| c02 | 年月日时换成干支，是查表 | 推近到四柱干支卡 |
+| c03 | 难的是读成一句人话 | 成段中文解读 |
+| c04 | 强弱喜忌得前后对得上 | 日主特质 → 五行分析条（pan） |
+| c05 | 没让 AI 去排盘，是训练它解读 | 灵体流式生成解读 |
+| c06 | 把依据摆出来，不是甩结论 | 回复里带依据的段落（pan） |
+| c07 | 体检、合盘、走势同一套逻辑 | 命理体检结论页 |
+| c08 | 就当换个角度认识自己 | AWAKE 灵体收尾 |
 
-> **卡片只占 3 拍，其余全是真实画面**——这是这个 repo 的硬规矩之一：
-> 卡只能当标题 / 数据展示，**不许整片都是卡**（`skills/video-master/` H1）。
+这张表不是事后补的——`lib/preview-shots.sh` 会在合成**之前**把「台词 ↔ 那一拍实际画面」
+摆在一起让你核对。agent 看不见画面，按秒数猜框必然「说 A 显 B」。
 
-### 顺手发现了原片的一个 bug
-
-用 repo 的脚本重跑这条选题时，`build-vertical.sh` 直接报警：
-
-```
-⚠ c02 实际 6.37s ≠ 目标 10.29s（素材可能比这拍短）
-⚠ c03 实际 6.37s ≠ 目标 7.80s（素材可能比这拍短）
-```
-
-榜单卡只渲了 6.36s，而这两拍分别需要 10.29s 和 7.80s。视频轨因此比音频轨短，
-`-shortest` 把音频尾巴截掉了——**已交付的那一版成片 48.10s，而 9 段配音总长 52.31s，
-有 4.2 秒配音没进片子**（收尾那句品牌词被砍掉大半）。
-
-把榜单卡冻末帧延长到 12s 之后重建，成片 54.57s，音视频都完整。
-这类问题肉眼很难发现，但机器一量就出来——这就是 `audit-video.sh` 存在的意义。
-
-### 卡模板长什么样
-
-`examples/demo-vertical/` 是另一条**纯模板**的预览片（5 套卡各一拍），
-不需要任何素材和 API key，用来看模板系统：
-
-```bash
-./lib/make-placeholders.sh examples/demo-vertical
-node lib/storyboard.js  --project examples/demo-vertical
-./lib/build-vertical.sh --project examples/demo-vertical --out examples/demo-vertical/demo-nosub.mp4
-/usr/bin/python3 lib/gen-subs.py --project examples/demo-vertical --skip c03 --no-merge
-./lib/burn-subs.sh examples/demo-vertical/demo-nosub.mp4 examples/demo-vertical/demo-v1.mp4 \
-                   --manifest examples/demo-vertical/subs/manifest.tsv
-```
-
-它的审计结果会明确写着「卡片占 100% —— 换真实素材」。**审计对自己人也不留情。**
+**还没到位的地方**（审计自己报出来的）：产品录屏源只有 720 宽，升到 1080 都是 1.5× 放大，
+字还是不够锐。根治要按倒推表重录（1080 宽输出想做 1.5× 特写，源至少 1620 宽），
+见 `skills/product-demo/`。
 
 ---
-
-## 给 agent 装上
-
-### 方式一：把这段发给你的 agent
-
-```
-把 https://github.com/ChenJiangxi/auramate-video 克隆到本地，
-把 skills/ 下所有目录复制到你的 .claude/skills/（或执行 ./install.sh <你的 agent 目录>），
-然后读 skills/video-master/SKILL.md —— 它是总纲，会把你路由到该用的子 skill。
-
-我要做的是：<在这里写需求，例如「一条 50 秒的抖音竖版片，讲 XXX」>
-
-规矩照 skills/video-master/ 里写的来。开工前先跑 ./tests/check-deps.sh 看依赖；
-没有 API key 就先用 lib/make-placeholders.sh 跑一版占位的给我看节奏。
-交付前必须跑 lib/audit-video.sh，并把「只有人能判的」那张清单原样发给我。
-```
-
-### 方式二：命令行
-
-```bash
-git clone https://github.com/ChenJiangxi/auramate-video.git && cd auramate-video
-./setup.sh                        # 装依赖 + 按「能力」汇报（不是按工具）
-./install.sh ~/your-agent-dir     # 复制 skills/* 到 <agent>/.claude/skills/
-```
-
-不装也行——**直接把 `skills/video-master/SKILL.md` 全文贴进 context 就能开工**，
-它内部所有引用都是 repo 内相对路径。
-
-### 给 Codex / Cursor 等只读 AGENTS.md 的 agent
-
-Claude Code 认 `.claude/skills/`，**Codex CLI 不认，它只读 `AGENTS.md`**。所以：
-
-```bash
-./install.sh codex ~/work/my-video      # 在工程目录写一份 AGENTS.md（路由 + 硬规矩 + 命令速查）
-cd ~/work/my-video && codex
-```
-
-**实测跑通过**：给一句「做一条 ~20 秒竖版片，没有 key 就用占位配音，走完全流程并跑 audit」，
-Codex 自己建骨架 → 按模板写 `topic.md`（还自己挑了个合规安全的题材）→ 过两道闸门 →
-占位配音和素材 → 合成 → 字幕 → `AUDIT PASS`，产出 1080×1920 / 21.2s / h264+aac。
-
-非交互跑（`codex exec`）踩到的两个坑，都不是 skill 的问题但会让你以为是：
-
-```bash
-codex exec --skip-git-repo-check -s workspace-write \
-  -m gpt-5.5 \                                    # ① 默认模型可能要求更新版 CLI，报 400
-  -c approval_policy='"never"' \                  # ② 不关审批的话非交互会一直挂着
-  -c 'sandbox_workspace_write.writable_roots=["/path/to/auramate-video"]' \
-  "你的任务"
-```
-
-① 症状是 `The 'xxx' model requires a newer version of Codex`；换个 CLI 支持的模型或升级 codex。
-② 症状是**跑十分钟一个文件都不产出**——它在等审批，而非交互模式没人能批。
-
-### 给只能吃单份 prompt 的 agent
-
-```bash
-./install.sh bundle /tmp/video-skill.md   # 总纲 + 全部 13 个子 skill 拼成一个文件
-```
-
-约 100KB / 粗估 5 万 tokens，脚本路径已经是绝对路径，整份贴进 context 就能开工。
 
 ### 别人要用，需要自己准备什么
 

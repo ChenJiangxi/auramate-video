@@ -131,6 +131,22 @@ lib/fit-vertical.sh footage/ext/x.mp4 work/v03.mp4 --dur 4.2 --ss 12
 **素材长度必须 ≥ 对应配音时长**，不然那一拍会黑屏。不够长就放慢（`setpts`），别切别的画面凑。
 `fit-vertical.sh` 会直接拦住并告诉你还差几秒。
 
+### 填完 shots.tsv，先核对再合成
+
+```bash
+lib/preview-shots.sh --project .        # 每拍抽一帧拼成 contact 图 + 打印「台词 ↔ 画面」对照
+```
+
+**agent 看不见画面，按秒数猜框必然「说 A 显 B」**——这是被打回最多的一类问题。
+先看 contact 图确认每个时间窗里真有台词说的东西，再去合成，比出片后返工便宜得多。
+
+`shots.tsv` **加第 6 列写「这一拍画面是什么」**，`preview-shots.sh` 和 `audit-video.sh`
+都会把它和台词并排打出来。写不出来通常意味着还没想清楚这拍要显什么。
+
+```
+c03	motion	footage/rec/report.webm	14	--move punch-in --to 640:850:40:180	成段中文解读（说「读成人话」→ 显人话）
+```
+
 ---
 
 ## 阶段 ④ 配音 → `audio/cNN.mp3`

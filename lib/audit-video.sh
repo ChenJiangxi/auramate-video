@@ -14,7 +14,7 @@
 #   ⑤ 画面构成  按素材来源统计 卡片 / 真实切片 / 产品录屏 各占多少时长
 #   ⑤b 清晰度    每拍源分辨率 → 放大倍数（>2× 判失败，>1.3× 提示）
 #   ⑥ 字幕      条数 == 拆句数，没有漏行
-#   ⑦ 成片      verify-output.sh    画幅 / 帧率 / 音轨 / faststart / 时长区间
+#   ⑦ 成片      画幅 / 帧率 / 音轨 / faststart / 时长区间 / **静音段 + 末尾有没有声**
 #   ⑧ 交付      文件名唯一带版本；交付包四件套是否齐
 #
 # 判不了的（只有人能判）会单独列成一张清单，别把它们当成「已通过」。
@@ -211,6 +211,21 @@ if [ -n "$VIDEO" ] && [ -f "$VIDEO" ]; then
         --min-dur "$tmin" --max-dur "$tmax" >/tmp/av-au-v.log 2>&1; then
     ok "$(sed -n '2p' /tmp/av-au-v.log | sed 's/^ *//')"
   else bad "成片不合格"; grep '✗' /tmp/av-au-v.log | sed 's/^/    /'; fi
+  # 「后半段没声音」这类问题肉眼看不出来（画面照常走），必须机器查
+  nsil=$(ffmpeg -hide_banner -nostats -i "$VIDEO" -af silencedetect=noise=-45dB:d=1.5 -f null - 2>&1 \
+         | grep -c silence_start || true)
+  if [ "${nsil:-0}" -gt 0 ]; then
+    bad "有 ${nsil} 段 ≥1.5s 的静音 —— 检查是不是某几拍配音缺失或 -shortest 把音轨截了"
+    ffmpeg -hide_banner -nostats -i "$VIDEO" -af silencedetect=noise=-45dB:d=1.5 -f null - 2>&1 \
+      | grep silence_start | head -5 | sed 's/^/    /'
+  else ok "全程无长静音段"; fi
+  tailv=$(ffmpeg -hide_banner -nostats -sseof -5 -i "$VIDEO" -af volumedetect -f null - 2>&1 \
+          | awk -F': ' '/mean_volume/{print $2}' | awk '{print $1}')
+  if [ -n "$tailv" ]; then
+    awk -v v="$tailv" 'BEGIN{exit !(v < -45)}' \
+      && bad "末 5 秒基本无声（${tailv}dB）—— 收尾那句配音没进片子" \
+      || ok "末 5 秒有声（${tailv}dB）"
+  fi
 else skip "没给 --video，跳过成片检查"; fi
 
 # ---------------------------------------------------------------- ⑧ 交付
