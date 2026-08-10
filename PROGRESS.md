@@ -3,13 +3,26 @@
 每小时一轮，一轮聚焦一个主题做透，做完自测 → push → 报结果。
 **下一轮开工先读这个文件，取第一个未打勾的条目。**
 
-## 完成条件（全部满足才停）
+## 完成条件 —— ✅ 全部满足（2026-08-10，循环已停）
 
-- [ ] 规划中的所有子 skill 都完成「深度展开」（不只是骨架）
-- [ ] `tests/validate.sh` 全绿（含端到端渲染）
-- [ ] 零 context agent 冒烟测试通过（只给 repo，能独立做出一条合规视频）
-- [ ] 已推送到 `origin main`
-- [ ] `SECRETS-CHECKLIST.md` 已交付给人类
+- [x] 规划中的所有子 skill 都完成「深度展开」—— **13 个 skill**
+- [x] `tests/validate.sh` 全绿（一致性 / 语法 / 4 个 linter / 端到端渲染 / 零 key 冒烟）
+- [x] 零 context agent 冒烟测试通过 —— 干净克隆 + 零 API key 走到 `AUDIT PASS`，
+      并已固化为 `validate.sh` 里的常驻断言
+- [x] 已推送到 `origin main`
+- [x] `SECRETS-CHECKLIST.md` 已交付给人类
+
+**最终规模**：13 个 skill · 23 个 lib 脚本 · 5 套卡模板 · 2 篇 references ·
+1 个零 key 可跑样例 · validate 里 40+ 条断言。
+
+### 还没验证的部分（诚实留档，拿到条件后要补）
+
+- `gen-voice.mjs` 没跑过真实 MiniMax API（缺 key）
+- `rec-page.js` / `render-card.js` 只过语法，没跑过真实站点（缺凭据 + 目标站）
+- 语速表只实测了 2 个音色（克隆音 @1.10 = 4.98、`presenter_male` @1.30 = 6.35），
+  `female-tianmei` / `female-shaonv` 还没量过
+
+补测之后把实测值回填进 `skills/topic-and-script/` 的语速表和 `skills/tts-voiceover/`。
 
 ---
 
