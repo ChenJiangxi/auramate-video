@@ -90,11 +90,9 @@ $REPO/lib/fit-vertical.sh footage/ext/x.mp4 work/v01.mp4 --dur 4.2 --ss 12
 
 ## 还没验证过的部分（诚实说明）
 
-- `gen-voice.mjs` **没跑过真实 API**（缺 key）。逻辑是从现役脚本移植的，
-  加了报错码提示，但真实返回没验过。
 - `rec-page.js` / `render-card.js` 只过了语法检查，**没跑过真实站点**
   （需要凭据 + 目标站）。
-- 语速表只实测了 2 个音色（克隆音 @1.10、`presenter_male` @1.30），
-  `female-tianmei` / `female-shaonv` 还没量过。
+- 克隆音（`voice_id` 私有）没测过。
 
-拿到 key 和目标站之后，这三项要补测，并把实测值回填进对应 skill。
+`gen-voice.mjs` 已在真实 MiniMax 接口上跑通（国际区 `api.minimax.io`），
+三个系统音色的实测语速已回填进 `skills/topic-and-script/` 和 `skills/tts-voiceover/`。

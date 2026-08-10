@@ -19,8 +19,15 @@
 ![storyboard](docs/demo/storyboard.png)
 
 这条不是拿模板凑的演示片，是**照着一条真实交付过的选题（「AI 考中国命理」）
-用这个 repo 的脚本重新跑出来的**：真配音（`presenter_male`）、真产品录屏、
-真实测数据，字幕按每句配音时长算。
+用这个 repo 的脚本从头跑出来的**——配音是这次**现调 MiniMax 接口**生成的
+（`presenter_male` @1.28，9 句 52.7s），产品录屏和榜单数据都是真的，
+字幕按每句配音的实测时长算。
+
+```bash
+# 配音这步长这样（key 从环境变量读，绝不进 argv）
+MINIMAX_API_KEY=<你的key> node lib/gen-voice.mjs \
+    --clips clips.json --out audio/ --voice presenter_male --speed 1.28
+```
 
 镜头构成（`shots.tsv` 九行，就是这么写的）：
 
@@ -203,12 +210,13 @@ git clone https://github.com/ChenJiangxi/auramate-video.git && cd auramate-video
 
 ## 还没验证的部分（诚实留档）
 
-- `lib/gen-voice.mjs` **没跑过真实 MiniMax API**（缺 key）。逻辑从现役脚本移植，
-  加了报错码提示，但真实返回没验过。上面 demo 里的配音是**之前用同一套参数生成好的真音频**，
-  不是这次现调的。
-- `lib/rec-page.js` / `lib/render-card.js` 只过了语法检查，**没跑过真实站点**。
-- 语速表只实测了 2 个音色（克隆音 @1.10 = 4.98 字/秒、`presenter_male` @1.30 = 6.35），
-  `female-tianmei` / `female-shaonv` 还没量过。
+- `lib/rec-page.js` / `lib/render-card.js` 只过了语法检查，**没跑过真实站点**
+  （需要目标站 + 登录凭据）。
+- 克隆音（`voice_id` 私有）没测过，只测了三个系统音色。
+
+`lib/gen-voice.mjs` 已在真实 MiniMax 接口上跑通（国际区，`presenter_male` /
+`female-tianmei` / `female-shaonv` 三个音色都出音），上面 demo 的配音就是这么生成的。
+key 走环境变量，repo 里只有占位符 —— 见 `SECRETS-CHECKLIST.md`。
 
 其余部分——竖版化、裁切放大、浏览器壳、卡模板、字幕、审计、交付——
 都在真实素材上跑过并抽帧目视确认过。

@@ -37,7 +37,9 @@ key 打错区域 → `2049 invalid api key`。脚本默认国际区，用 `MINIM
 返回 `data.audio` 是 **hex 字符串**，要 `Buffer.from(hex,'hex')` 再写文件。
 返回的 SRT 每个 clip 只有 1 段，**不是逐字时间戳**，做不了逐句字幕——字幕自己算（见 `skills/subtitles/`）。
 
-现成脚本：`lib/gen-voice.mjs`
+现成脚本：`lib/gen-voice.mjs`。**这套参数在真实接口上跑通过**（国际区 `api.minimax.io`，
+`presenter_male` / `female-tianmei` / `female-shaonv` 三个系统音色都成功出音）。
+key 从环境变量读，别写进代码或命令行 argv（argv 会泄露到 `ps`）。
 
 ```bash
 # 1) 先出音色候选给人类挑（agent 听不到成品音，必须让人拍板）
@@ -53,12 +55,14 @@ MINIMAX_API_KEY=... node lib/gen-voice.mjs \
 
 ## 二、音色按题材选
 
-| 题材 | voice_id | 倍速 |
-|---|---|---|
-| 知识 / 严肃 / 揭秘 / 纪录片感 | `presenter_male`（男主播） | 1.28–1.32 |
-| 年轻 / 情感 / 约会 / 共鸣 | `female-tianmei`（甜美年轻） | 1.24 |
-| 营销号轻快 | `female-shaonv`（少女） | 1.24–1.28 |
-| 第一人称本人叙述 | 克隆音 voice_id | 1.10–1.18 |
+| 题材 | voice_id | 倍速 | 实测语速（含标点） |
+|---|---|---|---|
+| 知识 / 严肃 / 揭秘 / 纪录片感 | `presenter_male`（男主播） | 1.28–1.32 | 6.13–6.35 字/秒 |
+| 年轻 / 情感 / 约会 / 共鸣 | `female-tianmei`（甜美年轻） | 1.24 | **5.37** 字/秒（明显偏慢） |
+| 营销号轻快 | `female-shaonv`（少女） | 1.24–1.28 | 6.40 字/秒 |
+| 第一人称本人叙述 | 克隆音 voice_id | 1.10–1.18 | 4.98 字/秒 |
+
+**同样的字数，`female-tianmei` 比 `presenter_male` 长 15%** —— 换音色要重算字数。
 
 **慎用**：`female-yujie`（御姐）、`presenter_female`（女主播）——被评价为「不够年轻 / 发飘」。
 **明确否过**：严肃/揭秘题材配营销号女声。

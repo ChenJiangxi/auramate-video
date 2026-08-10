@@ -163,4 +163,5 @@ clips.json 定 → check-script + check-compliance
 | ⑥ 字幕条数对不上 | 用了 `--skip` / `--no-merge` 就正常；否则查漏行 |
 | ⑦ 报 moov 在文件尾 | 导出漏了 `-movflags +faststart` |
 | ⑧ 文件名太通用 | 换成「选题名-vN.mp4」 |
+| ⑤ 画面构成把产品录屏算成「其它」 | 素材用了工程外的绝对路径，匹配不上目录约定 | 把素材放进（或软链到）`footage/rec` / `footage/ext` |
 | 审计全过但还是被打回 | 栽在人工那一列了——回上面案例库对号入座 |
