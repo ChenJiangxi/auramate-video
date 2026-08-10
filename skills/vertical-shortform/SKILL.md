@@ -209,8 +209,11 @@ enc_celeb(){ ffmpeg -nostdin -y -v error -ss "$4" -t "$2" -i "$1" -vf \
 **B1. 产品录屏用 `motion`（带镜头运动，产品片的主力）**
 
 ```
-c05	motion	footage/rec/report.webm	6	--move punch-in --to 620:900:50:260
+c05	motion	footage/rec/report.mp4	6	--move locate --to 1400:1500:380:420
 ```
+
+`locate` = **停 → 移 → 停**，先让观众看清整页再走到目标。这是产品段的默认选择；
+`punch-in` 是匀速版，节奏快的拍才用。
 
 第 5 列原样传给 `lib/motion.sh`。静态框放录屏字读不清也呆板，
 **推拉把注意力带过去**才是产品演示片的样子，见 `skills/product-demo/` 三·五。

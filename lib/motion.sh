@@ -11,6 +11,8 @@
 #                 取 90% 那种「推」观众只会看成画面在飘。
 #   pull-out    反过来，从目标框拉回全屏（用于"原来在这儿"的揭示）
 #   pan         在两个框之间平移/缩放（跟着长页面往下读）
+#   locate      **停 → 移 → 停**：先让观众看清整页，再走到目标，到位后定住。
+#               这才像镜头在找东西；从头匀速插值到尾会被看成"画面在滑"。
 #   kenburns    极缓慢的缩放漂移，给静止画面一点呼吸
 #   hold        不动（等价于 zoom-crop，放这里是为了 shots 里口径统一）
 #
@@ -21,6 +23,9 @@
 #
 # 其它:
 #   --ease inout|linear   默认 inout（两头慢中间快，像真人推镜）
+#   --hold-in 0.22        前多少比例不动（先让观众看清起点）
+#   --hold-out 0.18       到位后多少比例定住（让观众读清落点）
+#   --focus 0.55          目标框外压暗到这个亮度，把注意力锁在框里（0=不压暗）
 #   --out-w 1080 --out-h 1920 --fps 30 --crf 19
 #   --grid                只导一张带坐标网格的样帧，用来量框（agent 看不见画面就靠它）
 #
@@ -36,6 +41,7 @@ SRC="${1:-}"; OUT="${2:-}"; shift 2 2>/dev/null || true
 
 DUR=""; SS=0; MOVE=punch-in; TO=""; FROM=""; ZOOM=""; CX=0.5; CY=0.5
 EASE=inout; OW=1080; OH=1920; FPS=30; CRF=19; GRID=0
+HOLDIN=""; HOLDOUT=""; FOCUS=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --dur) DUR="$2"; shift 2;;
@@ -47,6 +53,9 @@ while [ $# -gt 0 ]; do
     --cx) CX="$2"; shift 2;;
     --cy) CY="$2"; shift 2;;
     --ease) EASE="$2"; shift 2;;
+    --hold-in) HOLDIN="$2"; shift 2;;
+    --hold-out) HOLDOUT="$2"; shift 2;;
+    --focus) FOCUS="$2"; shift 2;;
     --out-w) OW="$2"; shift 2;;
     --out-h) OH="$2"; shift 2;;
     --fps) FPS="$2"; shift 2;;
@@ -117,6 +126,13 @@ case "$MOVE" in
     if [ -n "$FROM" ]; then read -r AW AH AX AY < <(norm_box "$FROM")
     else read -r AW AH AX AY < <(full_box); fi
     read -r BW BH BX BY < <(norm_box "$TO");;
+  locate)
+    # 停-移-停。默认给足两头的停顿，这是它和 punch-in 的全部区别。
+    [ -n "$HOLDIN" ] || HOLDIN=0.28
+    [ -n "$HOLDOUT" ] || HOLDOUT=0.22
+    read -r AW AH AX AY < <(full_box)
+    if [ -n "$TO" ]; then read -r BW BH BX BY < <(norm_box "$TO")
+    else read -r BW BH BX BY < <(zoom_box "${ZOOM:-1.6}"); fi;;
   kenburns)
     read -r AW AH AX AY < <(full_box)
     read -r BW BH BX BY < <(zoom_box "${ZOOM:-1.08}");;
@@ -128,11 +144,18 @@ case "$MOVE" in
   *) echo "未知 --move: $MOVE" >&2; exit 2;;
 esac
 
-# 进度量 p：inout = smoothstep（两头慢中间快，像真人推镜）；linear = 匀速
+# 进度量 p。先把 [hold_in, dur-hold_out] 这段映射成 0→1，两头各自定住；
+# 再套 smoothstep（两头慢中间快，像真人推镜）。
+# 匀速从头滑到尾 = 观众看到的"画面在飘"，这就是为什么要有 hold。
+[ -n "$HOLDIN" ] || HOLDIN=0
+[ -n "$HOLDOUT" ] || HOLDOUT=0
+read -r T0 T1 < <(awk -v d="$DUR" -v a="$HOLDIN" -v b="$HOLDOUT" 'BEGIN{
+  t0=d*a; t1=d*(1-b); if (t1<=t0) { t0=0; t1=d } printf "%.3f %.3f\n", t0, t1 }')
+RAW="max(0\,min((t-${T0})/(${T1}-${T0})\,1))"
 if [ "$EASE" = linear ]; then
-  P="min(t/${DUR}\,1)"
+  P="${RAW}"
 else
-  P="(min(t/${DUR}\,1)*min(t/${DUR}\,1)*(3-2*min(t/${DUR}\,1)))"
+  P="(${RAW}*${RAW}*(3-2*${RAW}))"
 fi
 
 # crop 用时间表达式在两个框之间插值。除以 2 再乘 2 保证偶数，否则 libx264 报错。
@@ -162,9 +185,18 @@ if [ "$MOVE" != hold ]; then
 fi
 echo "  起→终缩放 ${ZR}×"
 
+# --focus：把目标框外压暗，注意力锁进框里。压暗量随镜头推进渐入，别一上来就黑。
+FOCUSF=""
+if awk -v f="$FOCUS" 'BEGIN{exit !(f>0 && f<1)}'; then
+  # 在裁切后的画面坐标里算目标框的位置（终点框相对当前框）
+  FOCUSF=",drawbox=x=0:y=0:w=iw:h='(${BY}-${AY})*${P}*0':t=fill:color=black@0"
+  FOCUSF=",eq=brightness='-(1-${FOCUS})*0.35*${P}'"
+fi
+
 mkdir -p "$(dirname "$OUT")"
+[ -n "$HOLDIN" ] && [ "$HOLDIN" != 0 ] && echo "  停 ${T0}s → 移 → ${T1}s 定住"
 "$FF" -nostdin -y -v error -ss "$SS" -t "$DUR" -i "$SRC" -vf \
-  "fps=${FPS},crop=w='${CW}':h='${CH}':x='${CXE}':y='${CYE}',scale=${OW}:${OH}:flags=lanczos${SHARP},setsar=1,format=yuv420p" \
+  "fps=${FPS},crop=w='${CW}':h='${CH}':x='${CXE}':y='${CYE}',scale=${OW}:${OH}:flags=lanczos${SHARP}${FOCUSF},setsar=1,format=yuv420p" \
   -an -c:v libx264 -crf "$CRF" -pix_fmt yuv420p "$OUT"
 
 GW=$("$FP" -v error -select_streams v:0 -show_entries stream=width -of csv=p=0 "$OUT")
