@@ -174,12 +174,17 @@ for name in "${CLIPS[@]}"; do
     cut|none|hard|-) tdur=0; tname=cut;;
   esac
   awk -v d="$tdur" 'BEGIN{ exit !(d>0) }' || { tdur=0; tname=cut; }
+  # 转场时长取整到帧。不取整的话它同时是「起始秒回拉多少」，0.22s @30fps = 6.6 帧，
+  # 源就被采样在两帧之间，同一时刻两版取到的画面差半帧 —— 明明该一模一样的。
+  if [ "$tname" != cut ]; then
+    tdur="$(awk -v d="$tdur" -v f="$FPS" 'BEGIN{ n=int(d*f+0.5); if (n<1) n=1; printf "%.4f", n/f }')"
+  fi
   # 转场不能长过前一拍（offset 会变负）
   awk -v d="$tdur" -v p="${BT[$((n-1))]}" 'BEGIN{ exit !(d>=p) }' \
     && { echo "  ⚠ ${name} 的入场转场 ${tdur}s 不短于上一拍 ${BT[$((n-1))]}s，改成硬切" >&2; tdur=0; tname=cut; }
   XIN+=("$tdur"); XT+=("$tname")
   if [ "$tname" = cut ]; then printf "  %s  ← 硬切\n" "$name"
-  else printf "  %s  ← %s %ss\n" "$name" "$tname" "$tdur"; fi
+  else printf "  %s  ← %s %.3fs\n" "$name" "$tname" "$tdur"; fi
   n=$((n+1))
 done
 
@@ -253,7 +258,7 @@ for name in "${CLIPS[@]}"; do
     card)  enc_card  "${SRC[$i]}" "$ctgt_enc" "$o";;
     full)  enc_full  "${SRC[$i]}" "$ctgt_enc" "$o" "$sse";;
     fit)   enc_fit   "${SRC[$i]}" "$ctgt_enc" "$o" "$sse";;
-    motion) enc_motion "${SRC[$i]}" "$ctgt_enc" "$o" "$sse" "${EXTRA[$i]}";;
+    motion) enc_motion "${SRC[$i]}" "$ctgt_enc" "$o" "$sse" "${EXTRA[$i]} --lead ${pull}";;
     celeb) enc_celeb "${SRC[$i]}" "$ctgt_enc" "$o" "$sse";;
     patch) enc_patch "${SRC[$i]}" "$ctgt_enc" "$o" "$sse" "${EXTRA[$i]}";;
     *) echo "  ✗ 未知编码器 '${KIND[$i]}' ($name)" >&2; exit 4;;

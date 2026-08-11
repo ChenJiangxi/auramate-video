@@ -110,7 +110,7 @@ open(os.path.join(tmp,'same.tsv'),'w',encoding='utf-8').write('\n'.join('\t'.joi
 PY
 
 "$B" --project "$EX" --shots "$TMP/col7.tsv" --out "$TMP/c7.mp4" >"$TMP/c7.log" 2>&1
-grep -q 'slideup 0.30s' "$TMP/c7.log" && grep -q '← 硬切' "$TMP/c7.log" \
+grep -q 'slideup 0.3' "$TMP/c7.log" && grep -q '← 硬切' "$TMP/c7.log" \
   && ok "shots.tsv 第7列能逐拍指定转场（含 cut）" || { no "第7列没生效"; grep '←' "$TMP/c7.log"; }
 awk -v a="$(dur "$TMP/c7.mp4")" -v b="$ds" 'BEGIN{ exit !((a-b<0.02)&&(b-a<0.02)) }' \
   && ok "换了转场类型和时长，总时长还是不变" || no "指定转场后总时长变了"

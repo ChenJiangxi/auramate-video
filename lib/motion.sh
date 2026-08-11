@@ -40,8 +40,8 @@ SRC="${1:-}"; OUT="${2:-}"; shift 2 2>/dev/null || true
 [ -n "$SRC" ] && [ -f "$SRC" ] && [ -n "$OUT" ] || { sed -n '2,30p' "$0"; exit 2; }
 
 DUR=""; SS=0; MOVE=punch-in; TO=""; FROM=""; ZOOM=""; CX=0.5; CY=0.5
-EASE=inout; OW=1080; OH=1920; FPS=30; CRF=19; GRID=0
-HOLDIN=""; HOLDOUT=""; FOCUS=0
+EASE=inout; OW=1080; OH=1920; FPS=30; CRF=19; GRID=0; DRY=0
+HOLDIN=""; HOLDOUT=""; FOCUS=0; LEAD=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --dur) DUR="$2"; shift 2;;
@@ -56,11 +56,13 @@ while [ $# -gt 0 ]; do
     --hold-in) HOLDIN="$2"; shift 2;;
     --hold-out) HOLDOUT="$2"; shift 2;;
     --focus) FOCUS="$2"; shift 2;;
+    --lead) LEAD="$2"; shift 2;;
     --out-w) OW="$2"; shift 2;;
     --out-h) OH="$2"; shift 2;;
     --fps) FPS="$2"; shift 2;;
     --crf) CRF="$2"; shift 2;;
     --grid) GRID=1; shift;;
+    --dry-run) DRY=1; shift;;
     *) echo "unknown arg: $1" >&2; exit 2;;
   esac
 done
@@ -149,8 +151,14 @@ esac
 # 匀速从头滑到尾 = 观众看到的"画面在飘"，这就是为什么要有 hold。
 [ -n "$HOLDIN" ] || HOLDIN=0
 [ -n "$HOLDOUT" ] || HOLDOUT=0
-read -r T0 T1 < <(awk -v d="$DUR" -v a="$HOLDIN" -v b="$HOLDOUT" 'BEGIN{
-  t0=d*a; t1=d*(1-b); if (t1<=t0) { t0=0; t1=d } printf "%.3f %.3f\n", t0, t1 }')
+# --lead L：开头 L 秒定在起点框不动，镜头路径只跑剩下的 (DUR-L)。
+# 给转场用的：入场有转场的那一拍会多渲 L 秒喂给叠化，如果让路径摊到
+# 加长后的总时长上，路径时序就跟着转场变了 —— 于是「这句开口那一帧」
+# 开转场和不开转场会取到不同的框（实测 pan 拍差 5–9 个灰阶，locate 因为
+# 本来就有起手停顿所以看不出来）。把多出来的 L 秒做成起手停顿，时序就不受影响。
+read -r T0 T1 < <(awk -v d="$DUR" -v L="$LEAD" -v a="$HOLDIN" -v b="$HOLDOUT" 'BEGIN{
+  e=d-L; if (e<=0) { e=d; L=0 }
+  t0=L+e*a; t1=L+e*(1-b); if (t1<=t0) { t0=L; t1=d } printf "%.3f %.3f\n", t0, t1 }')
 RAW="max(0\,min((t-${T0})/(${T1}-${T0})\,1))"
 if [ "$EASE" = linear ]; then
   P="${RAW}"
@@ -191,6 +199,13 @@ if awk -v f="$FOCUS" 'BEGIN{exit !(f>0 && f<1)}'; then
   # 在裁切后的画面坐标里算目标框的位置（终点框相对当前框）
   FOCUSF=",drawbox=x=0:y=0:w=iw:h='(${BY}-${AY})*${P}*0':t=fill:color=black@0"
   FOCUSF=",eq=brightness='-(1-${FOCUS})*0.35*${P}'"
+fi
+
+# --dry-run：框已经算完也打印了，到此为止。给 lib/check-motion.py 用 ——
+# 让「这一拍的镜头往哪儿走」只有一处实现，检查器不必再抄一遍框的算法。
+if [ "$DRY" = 1 ]; then
+  echo "BOX ${AW} ${AH} ${AX} ${AY} ${BW} ${BH} ${BX} ${BY} ${SW} ${SH} ${MOVE}"
+  exit 0
 fi
 
 mkdir -p "$(dirname "$OUT")"

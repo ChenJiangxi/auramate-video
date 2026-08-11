@@ -31,6 +31,7 @@ lib/audit-video.sh --project <工程目录> --video <成片.mp4> --target 40-60
 | ② 合规 | 封建迷信红线，**有 BLOCK 直接失败** | `check-compliance.py` |
 | ③ 配音 | 每句非空 / 时长合理 / 不是静音 / 语速 / **是不是占位音** | `verify-audio.sh` |
 | ④ 分镜 | `shots.tsv` 覆盖每一拍；素材存在且**够长** | 内置 |
+| ④b 镜头 | 整片镜头不是同一条路线（起手/方向/推拉/有没有真的动） | `check-motion.py` |
 | ⑤ 画面构成 | 卡片 / 真实切片 / 产品录屏 各占多少时长 | 内置 |
 | ⑥ 字幕 | 条数 == 拆句数，没有漏行 | 内置 |
 | ⑦ 成片 | 画幅 / 帧率 / 音轨 / faststart / 时长区间 | `verify-output.sh` |

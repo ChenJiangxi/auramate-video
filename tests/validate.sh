@@ -208,6 +208,47 @@ printf '[{"name":"c01","text":"测试一句口播。"}]\n' > "$MX/clips.json"
 if "$ROOT/lib/build-vertical.sh" --project "$MX" --shots "$MX/shots.tsv" --out "$MX/o.mp4" >/tmp/av-mo2.log 2>&1; then
   ok "shots.tsv 的 motion 编码器接通了"
 else bad "motion 编码器在管线里失败"; sed -n '1,10p' /tmp/av-mo2.log; fi
+
+# --dry-run 只算框不渲（check-motion.py 靠它，别让它退化成真渲染）
+if "$ROOT/lib/motion.sh" "$MX/src.mp4" "$MX/never.mp4" --dur 2 --ss 1 \
+     --move pan --from 720:1280:0:0 --to 300:400:200:600 --dry-run 2>/dev/null | grep -q '^BOX '; then
+  [ -f "$MX/never.mp4" ] && bad "--dry-run 居然真渲了文件" || ok "motion --dry-run 只报框不出文件"
+else bad "--dry-run 没打印 BOX 行"; fi
+
+# --lead：开头 N 秒定住，路径只跑剩下的。转场那 0.22s 不许把镜头时序带偏。
+"$ROOT/lib/motion.sh" "$MX/src.mp4" "$MX/nolead.mp4" --dur 2.0 --ss 1 \
+  --move pan --from 720:1280:0:0 --to 300:400:200:600 >/dev/null 2>&1
+# lead 取 0.2s = 整 6 帧。非整帧的话源会被采样在两帧之间，两版差半帧，
+# 测出来永远不为零 —— build-vertical 里的转场时长也因此取整到帧。
+"$ROOT/lib/motion.sh" "$MX/src.mp4" "$MX/lead.mp4" --dur 2.2 --ss 0.8 --lead 0.2 \
+  --move pan --from 720:1280:0:0 --to 300:400:200:600 >/dev/null 2>&1
+# 加了 lead 的那条整体后移 0.2s，所以要错开 0.2s 比 —— 对齐了就该几乎一样
+dl=$(/usr/bin/python3 "$ROOT/tests/cmp-frame.py" "$MX/nolead.mp4" "$MX/lead.mp4" 0.90 1.10 2>/dev/null || echo 999)
+# 反证：不错开地比，必须明显不同，否则说明这条测试根本没测到东西
+dn=$(/usr/bin/python3 "$ROOT/tests/cmp-frame.py" "$MX/nolead.mp4" "$MX/lead.mp4" 0.90 0.90 2>/dev/null || echo 0)
+if awk -v a="$dl" -v b="$dn" 'BEGIN{exit !(a<4 && b>a+4)}'; then
+  ok "--lead 让加长后的镜头时序和原来对齐（错开比 ${dl}，不错开比 ${dn}）"
+else bad "--lead 没对齐：错开比 ${dl} / 不错开比 ${dn}"; fi
+
+# check-motion.py：整片镜头单一必须被抓出来
+printf 'c01\tmotion\t%s\t0\t--move locate --to 300:400:200:300\n' "$MX/src.mp4"  > "$MX/same.tsv"
+printf 'c02\tmotion\t%s\t0\t--move locate --to 300:400:220:320\n' "$MX/src.mp4" >> "$MX/same.tsv"
+printf 'c03\tmotion\t%s\t0\t--move locate --to 300:400:240:340\n' "$MX/src.mp4" >> "$MX/same.tsv"
+printf 'c04\tmotion\t%s\t0\t--move locate --to 300:400:260:360\n' "$MX/src.mp4" >> "$MX/same.tsv"
+if /usr/bin/python3 "$ROOT/lib/check-motion.py" --project "$MX" --shots "$MX/same.tsv" >/tmp/av-cm1.log 2>&1; then
+  bad "四拍全从全屏推进去，check-motion 竟然放行"
+else
+  grep -q '全屏' /tmp/av-cm1.log && ok "check-motion 抓住「每拍都从全屏推进去」" \
+    || { bad "check-motion 报的不是全屏起手"; sed -n '/✗/p' /tmp/av-cm1.log; }
+fi
+# 有变化的一组必须放行（不能误报）
+printf 'c01\tmotion\t%s\t0\t--move pan --from 720:1280:0:0 --to 400:520:160:400\n' "$MX/src.mp4"  > "$MX/vary.tsv"
+printf 'c02\tmotion\t%s\t0\t--move pan --from 400:520:160:400 --to 260:340:420:700\n' "$MX/src.mp4" >> "$MX/vary.tsv"
+printf 'c03\tmotion\t%s\t0\t--move pan --from 260:340:420:700 --to 640:1140:40:70\n' "$MX/src.mp4" >> "$MX/vary.tsv"
+printf 'c04\tmotion\t%s\t0\t--move pan --from 300:400:60:500 --to 300:400:420:500\n' "$MX/src.mp4" >> "$MX/vary.tsv"
+/usr/bin/python3 "$ROOT/lib/check-motion.py" --project "$MX" --shots "$MX/vary.tsv" >/tmp/av-cm2.log 2>&1 \
+  && ok "推-拉-横移混着走的一组放行（不误报）" \
+  || { bad "check-motion 误报"; sed -n '/✗/p' /tmp/av-cm2.log; }
 rm -rf "$MX"
 fi
 
