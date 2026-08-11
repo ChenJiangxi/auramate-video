@@ -40,7 +40,12 @@
 
 素材是**移动端布局 + 3 倍像素**逐帧录的（2160×3840），所以推到 2.4× 时输出仍是降采样。
 
-### 四个反直觉的结论（都是被打回后量出来的）
+**换素材的地方叠化，同一段素材里硬切。** 前四拍是同一段录屏上的一次连续运镜，
+中间叠化只会糊成一团；第五拍换到解读正文，那里才是观众感觉得到「换了一场」的地方。
+
+![转场](docs/demo/demo.gif)
+
+### 七个反直觉的结论（都是被打回、或者被量出来推翻的）
 
 **一、布局归布局，像素归像素。** 想要高分辨率就把 viewport 调宽？
 网站的响应式断点会切到桌面布局，主视觉缩到角落、大片留白，竖版素材直接报废。
@@ -56,6 +61,22 @@
 
 **四、逻辑链是写字之前的事。** 三道 linter 全绿也可能是流水账——
 机器查不了「这句接不接得住上一句」。见 `skills/topic-and-script/` §5.5。
+
+**五、音画会逐拍漂移，而且不报错。** 每拍单独编码时 `-t` 会把时长向上取整到整帧，
+一拍多十几毫秒，concat 起来**逐拍累加**。量了一条真实的 8 拍片子：
+最后一拍画面比它的配音**晚 171ms**，一路越来越晚。
+修法是先算每拍的**绝对**边界再取整到帧，误差就不累积了（实测降到 17ms，半帧以内）。
+这条是做转场时才发现的 —— 转场必须把边界钉在绝对时间上，一钉就露馅了。
+
+**六、加转场最容易犯的错是悄悄改了音画关系。** 交叉溶解要两段素材重叠，
+重叠多少总长就短多少。正确做法是把转场塞进**上一拍句末的停顿里**、
+让它结束在下一句开口的那一刻：总长不变，每句开口那一帧和硬切版一模一样，
+音频也不用做交叉淡化。推导见 `skills/ffmpeg-cookbook/`「转场」。
+
+**七、录屏里没有光标。** 截图和 `recordVideo` 都不含系统光标。不自己画一个，
+出来就是页面自己在动、输入框自己在填字，读起来像 bug 演示。
+光标的动画还必须**按帧**推进 —— 逐帧截图的墙上间隔不均匀（一帧 100–300ms 还会抖），
+用 CSS 动画的话水波纹在成片里会忽快忽慢。见 `lib/rec-frames.js --cursor --act`。
 
 ---
 
@@ -140,7 +161,7 @@
    ⤷ 闸门  check-script.py         ← 单拍时长 / "ta" / 钩子具体性
 ③ 素材   footage/      真实切片 · 产品录屏 · 动效卡
 ④ 配音   audio/cNN.mp3 配音时长驱动后面所有时间轴
-⑤ 合成   *-nosub.mp4   逐拍编码 → concat → 拼音轨 → mux
+⑤ 合成   *-nosub.mp4   逐拍编码 → 拼接（转场落在句末停顿里）→ 拼音轨 → mux
 ⑥ 字幕   *-v1.mp4      按配音时长算时间轴，1:1 不许漏行
 ⑦ 封面   cover.png     爆款风，不是学术风
 ⑧ 交付   交付包.zip     唯一文件名 + zip + 故事板图 + 文案
@@ -149,6 +170,8 @@
 
 **核心机制是音频驱动**：先配音，用 `ffprobe` 量出每句真实时长，视频每一拍 = 这句配音 + 0.25s。
 反过来做（先定画面长度让配音去凑）必然出现「画面停在那儿死寂几秒」。
+
+拍长还要**按绝对边界取整到帧**。逐拍向上取整会累加，量过一条真片子：末拍画面比配音晚 171ms。
 
 **闸门是前置的**，因为返工成本差着数量级：选题错要全片重做，参数错只要重跑一次脚本。
 
@@ -163,7 +186,7 @@
 | **想选题 / 写口播稿** | `skills/topic-and-script/`（角度库 + 钩子句式 + 实测语速 + 人味儿关） |
 | **确认这题材能不能做** | `skills/compliance-redlines/`（先过这关，再谈别的） |
 | **扒外部真实素材** | `skills/real-clip-mashup/` → `lib/fetch-clip.sh` → `lib/fit-vertical.sh` |
-| **录自家产品界面** | `skills/product-demo/` → `lib/rec-page.js` → `lib/motion.sh`（推拉）→ `lib/wrap-chrome.sh` |
+| **录自家产品界面** | `skills/product-demo/` → `lib/rec-frames.js`（高像素 + 光标 + 动作表）→ `lib/motion.sh`（推拉）→ `lib/wrap-chrome.sh` |
 | **做大字卡 / 数据榜** | `skills/html-motion-cards/` → `lib/storyboard.js` |
 | **配音** | `skills/tts-voiceover/` → `lib/gen-voice.mjs` |
 | **加字幕** | `skills/subtitles/` → `lib/gen-subs.py` + `lib/burn-subs.sh` |
@@ -185,18 +208,18 @@
 | `skills/topic-and-script/` | **选题与脚本**。决定 80% 的那一环：角度库、钩子句式、实测语速、文案模板 |
 | `skills/vertical-shortform/` | 竖版短视频（抖音 / 小红书，1080×1920，40–60s）完整管线 |
 | `skills/real-clip-mashup/` | 真人切片混剪：yt-dlp 扒真实素材 → 竖版化 → 混剪 |
-| `skills/product-demo/` | 产品录屏演示：素材盘点 → 录屏 → 裁切放大 → 假浏览器壳 |
+| `skills/product-demo/` | 产品录屏演示：素材盘点 → 录屏（含可见光标 + 动作表）→ 裁切放大 → 假浏览器壳 |
 | `skills/html-motion-cards/` | HTML/CSS 动效卡：5 套模板 + 公共设计系统 + storyboard 驱动渲染 |
 | `skills/tts-voiceover/` | 配音：MiniMax T2A v2、克隆音 / 系统音色、语速、读音坑 |
 | `skills/subtitles/` | 字幕：PIL overlay（无 libass 环境）+ ASS 两条路 |
 | `skills/cover-thumbnail/` | 封面：爆款风巨字 + 戏剧图 + 副标 |
 | `skills/quality-gate/` | **交付前质量闸门**：一条命令跑完机械检查 + 17 条真实被打回案例 |
 | `skills/delivery/` | 交付：唯一文件名 + zip + 故事板图 + faststart |
-| `skills/ffmpeg-cookbook/` | ffmpeg 配方库：竖版化、zoompan、concat、mux、探测 |
+| `skills/ffmpeg-cookbook/` | ffmpeg 配方库：竖版化、zoompan、concat、**转场（不动时间轴的推导）**、mux、探测 |
 | `lib/` | 可直接跑的脚本（扒素材 / 竖版化 / build / 配音 / 字幕 / 封面 / 合规 / 审计 / 交付） |
 | `references/` | 长文参考：零 context 走查、B 站横版长视频、平台文案模板 |
 | `examples/` | 两个可跑样例（`hello-vertical` 最小链路 / `demo-vertical` 卡模板预览），都不需要 API key |
-| `tests/validate.sh` | 自检：一致性、frontmatter、死链、4 个 linter、端到端渲染、零 key 冒烟 |
+| `tests/validate.sh` | 自检：一致性、frontmatter、死链、4 个 linter、转场时间轴、光标与动作表、端到端渲染、零 key 冒烟 |
 | `tests/check-consistency.py` | 一致性：孤儿脚本 / 路由完整 / README 覆盖 / **旧说法不许复活** |
 | `setup.sh` | 装依赖并按**能力**汇报（剪辑 / 字幕 / 配音 / 录屏 / 扒素材 各自行不行） |
 | `install.sh` | 接到 agent 上：`claude`（.claude/skills）/ `codex`（AGENTS.md）/ `bundle`（单文件） |

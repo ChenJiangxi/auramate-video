@@ -1,0 +1,69 @@
+<!doctype html>
+<!-- 一个假的移动端产品页，只用来测录屏工具链（光标、动作表、逐帧截图）。
+     不连网、不依赖任何外部资源，所以 validate.sh 在离线机器上也能跑。 -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>fixture app</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0f1117; color: #e8e9ee; font: 16px/1.6 -apple-system, "PingFang SC", sans-serif; }
+  .wrap { padding: 28px 20px 120px; }
+  h1 { font-size: 26px; letter-spacing: .5px; margin-bottom: 6px; }
+  .sub { color: #8b90a0; font-size: 14px; margin-bottom: 26px; }
+  .field { background: #191d28; border: 1px solid #2a3040; border-radius: 12px;
+           padding: 14px 16px; font-size: 17px; color: #e8e9ee; width: 100%; }
+  .field::placeholder { color: #5c6274; }
+  .go { margin-top: 16px; width: 100%; padding: 15px; border: 0; border-radius: 12px;
+        background: #d9a441; color: #17181d; font-size: 17px; font-weight: 600; }
+  .go:active { background: #c08f30; }
+  .row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 30px; }
+  .cell { background: #191d28; border: 1px solid #2a3040; border-radius: 10px;
+          padding: 14px 4px; text-align: center; }
+  .cell b { display: block; font-size: 24px; color: #d9a441; }
+  .cell span { font-size: 11px; color: #767c8e; }
+  .sec { margin-top: 34px; }
+  .sec h2 { font-size: 18px; margin-bottom: 10px; }
+  .sec p { color: #a9aebd; font-size: 15px; margin-bottom: 12px; }
+  #out { margin-top: 20px; min-height: 40px; color: #d9a441; font-size: 15px; }
+</style>
+<div class="wrap">
+  <h1>八字排盘</h1>
+  <div class="sub">输入出生时间，先把八个字排出来</div>
+
+  <input id="bd" class="field" placeholder="1995-08-11 07:30">
+  <button id="go" class="go">排盘</button>
+  <div id="out"></div>
+
+  <div class="row" id="grid">
+    <div class="cell"><b>乙</b><span>年干</span></div>
+    <div class="cell"><b>亥</b><span>年支</span></div>
+    <div class="cell"><b>甲</b><span>月干</span></div>
+    <div class="cell"><b>申</b><span>月支</span></div>
+  </div>
+
+  <!-- 正文必须比视口高，页面才滚得动。第一版正文只有 5 段、总高正好等于视口，
+       scrollHeight === clientHeight，滚动动作静默不生效（查了一圈才发现是素材问题）。 -->
+  <div id="body"></div>
+</div>
+<script>
+  const SEC = [
+    ['日主', '日主偏弱，喜火忌水。这一段是解读正文，用来占位。'],
+    ['十神', '哪个字在克我，哪个字在帮我，往下能一直问。'],
+    ['大运', '一步一步往后排，每一步十年。'],
+    ['流年', '按年看，和大运叠在一起判断。'],
+    ['五行', '金木水火土各占多少，缺什么补什么是另一回事。'],
+    ['格局', '这里再放一段，纯占位。'],
+    ['用神', '取用神的思路，也是占位。'],
+    ['备注', '结果只当参考。'],
+  ];
+  document.getElementById('body').innerHTML = SEC.map(function (s) {
+    return '<div class="sec"><h2>' + s[0] + '</h2><p>' + s[1] + '</p>' +
+           '<p>补一段让这页足够高，测滚动用。</p></div>';
+  }).join('');
+</script>
+<script>
+  document.getElementById('go').addEventListener('click', function () {
+    document.getElementById('out').textContent =
+      '已排：' + (document.getElementById('bd').value || '（空）');
+  });
+</script>

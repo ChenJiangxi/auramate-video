@@ -289,7 +289,8 @@ ffmpeg -nostdin -y -v error -i work/video.mp4 -i work/voice.m4a \
 lib/build-vertical.sh --project <dir> --shots shots.tsv --out <slug>-nosub.mp4
 ```
 
-`shots.tsv` 每行：`clip<TAB>编码器<TAB>素材路径<TAB>起始秒`
+`shots.tsv` 每行：`clip<TAB>编码器<TAB>素材路径<TAB>起始秒<TAB>额外参数<TAB>画面说明<TAB>入场转场`
+（后三列可留空）
 
 ```
 c01	celeb	footage/ext/ai-deepseek.mp4	2
@@ -297,6 +298,36 @@ c02	card	html/beats/bench.webm	0
 c05	patch	footage/rec/mingpan.mp4	2
 c09	full	footage/rec/dialogue.webm	16
 ```
+
+### 转场
+
+默认就是开的：`--xfade 0.22 --xfade-type auto`。auto 的规则只有一条 ——
+**前后两拍是同一个素材文件就硬切，换了素材才叠化**。同一段素材自己跟自己叠化
+只会糊成一团，那不是转场，是重影。
+
+第 7 列逐拍指定「进入这一拍」用什么：
+
+```
+c04	motion	footage/rec/top3x.mp4	0	--move locate --to 300:520:390:980	推到八个字	fadeblack
+c05	card	html/beats/point.webm	0			cut
+c06	full	footage/rec/read.mp4	4			slideup:0.35
+```
+
+`cut` 硬切，其余是 xfade 的类型名（`fade` / `fadeblack` / `dissolve` /
+`smoothup` / `slideup` / `circleopen` / `pixelize` …），`:0.35` 追加自定义时长。
+全片一刀切用 `--xfade-type fadeblack`，全片硬切用 `--no-xfade`。
+
+**为什么可以放心开**：转场整个落在上一拍句末的 GAP 静音里，
+终点正好是下一句开口的那一刻。所以
+① 总时长不变 ② 每句开口那一帧和硬切版**一模一样** ③ 音频不用做交叉淡化。
+推导见 `skills/ffmpeg-cookbook/`「转场」，回归测试在 `tests/transitions-test.sh`。
+
+转场时长必须 ≤ GAP（0.25s），超了会盖住上一句的话尾，脚本会警告。
+超过上一拍时长会自动降级成硬切。
+
+选型别贪：**默认 `fade` 0.22s 是对的**。段落真的换了（从产品页切到结论卡）
+可以用一次 `fadeblack`；`slideup` 之类有方向感的一片里最多用一两次，
+用多了每一刀都在抢戏。
 
 ---
 

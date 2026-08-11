@@ -98,6 +98,61 @@ ffmpeg -f concat -safe 0 -i list.txt -c:v libx264 -crf 19 -pix_fmt yuv420p out.m
 
 ---
 
+## 转场（不动时间轴的做法）
+
+`lib/build-vertical.sh` 已经内建，这里写清楚**为什么是这么算的**，
+自己写别的合成脚本时照搬。
+
+交叉溶解要两段素材重叠，天真做法是直接 xfade：
+
+```bash
+# ✗ 这么写总长会短掉 (n−1)×x
+[v0][v1]xfade=transition=fade:duration=0.22:offset=<拍1长度>
+```
+
+短掉的后果不是「短一点」，是**每一句都往前串**，越到后面偏得越多，
+最后一句被 mux 的 `-shortest` 直接切掉，而且不报错。
+
+正确做法：把转场塞进**上一拍句末的 GAP 静音**里，让它**结束**在下一句开口的那一刻。
+
+```
+d_k        第 k 拍时长（= 配音时长 + GAP）
+T_k        前 k 拍之和
+x_k        进入第 k+1 拍的转场时长（要 ≤ GAP）
+
+offset_k = T_k − x_k          转场结束正好是第 k+1 句开口
+L_{k+1}  = d_{k+1} + x_k      入场那一拍要多渲 x_k 秒喂给转场
+拼完长度 = offset_k + L_{k+1} = T_k + d_{k+1} = T_{k+1}   ← 和硬切一模一样
+```
+
+三个必须一起做到的点：
+
+1. **多出来的 x 秒加在这一拍的前面，不能让内容整体提前。**
+   起始秒有余量就回拉（`-ss` 减 x），起始秒是 0（卡片）就冻首帧顶上。
+   否则「这句开口那一帧」会跟着转场时长变，开关转场会改变观众在关键时刻看到的东西。
+2. **每一步用绝对时间 T_k 锚定，不要在上一步的结果上累加。**
+   这样取帧的舍入误差不累积，只有最后一拍会差半帧。
+3. **`settb` 不能省。** `concat` 滤镜输出时基是 1/1000000，`xfade` 要求两路时基一致，
+   混用会直接报 `do not match the corresponding second input link xfade timebase`。
+
+```bash
+ffmpeg -i v01.mp4 -i v02.mp4 -i v03.mp4 -filter_complex "
+[0:v]fps=30,settb=1/30,setpts=PTS-STARTPTS[s0];
+[1:v]fps=30,settb=1/30,setpts=PTS-STARTPTS[s1];
+[2:v]fps=30,settb=1/30,setpts=PTS-STARTPTS[s2];
+[s0][s1]xfade=transition=fade:duration=0.22:offset=4.03,settb=1/30[j1];
+[j1][s2]concat=n=2:v=1:a=0,settb=1/30[j2]" -map "[j2]" out.mp4
+```
+
+硬切边界用 `concat` 滤镜，别用 `duration=0` 的 xfade —— 它不报错，
+但输出时长直接错（实测要 5.0s 出来 3.03s）。
+
+**音频不用做交叉淡化**：转场整个落在静音的 GAP 里，两句话本来就不重叠。
+
+转场时长 ≤ GAP（默认 GAP 0.25 / 转场 0.22）。超了就开始盖上一句的话尾。
+
+---
+
 ## 音轨拼接（防漂移）
 
 ```bash

@@ -212,6 +212,37 @@ rm -rf "$MX"
 fi
 
 
+# ---------------------------------------------------------------- 3.3
+if [ "$SKIP_RENDER" = 1 ]; then
+  sec "转场（已跳过 --skip-render）"
+else
+sec "转场：不许偷偷动时间轴"
+bash "$ROOT/tests/transitions-test.sh" >/tmp/av-trans.log 2>&1 || fail=1
+cat /tmp/av-trans.log
+grep -q '✗' /tmp/av-trans.log && fail=1
+fi
+
+# ---------------------------------------------------------------- 3.32
+if [ "$SKIP_RENDER" = 1 ] || ! node -e "require('playwright')" 2>/dev/null; then
+  sec "光标可视化（已跳过：--skip-render 或无 playwright）"
+else
+sec "光标可视化 + 动作表"
+node "$ROOT/tests/cursor-test.js" >/tmp/av-cursor.log 2>&1 || fail=1
+cat /tmp/av-cursor.log
+grep -q '✗' /tmp/av-cursor.log && fail=1
+# 端到端：rec-frames.js --cursor --act 真能出片（上面测的是模块，这里测 CLI 接线）
+RC="$ROOT/tests/fixtures/pcur"; rm -rf "$RC"; mkdir -p "$RC"
+if node "$ROOT/lib/rec-frames.js" --url "file://$ROOT/tests/fixtures/page/index.html" \
+     --out "$RC/act.mp4" --w 720 --h 1280 --dsf 1 --fps 8 --secs 3 \
+     --act "$ROOT/tests/fixtures/page/actions.json" >/tmp/av-rc.log 2>&1; then
+  grep -q '光标 touch' /tmp/av-rc.log \
+    && ok "给了 --act 会自动开光标（不然页面像自己在动）" || bad "--act 没有自动开光标"
+  w=$(ffprobe -v error -select_streams v:0 -show_entries stream=width -of csv=p=0 "$RC/act.mp4")
+  [ "$w" = 720 ] && ok "rec-frames --cursor --act 出片 ${w}px" || bad "录屏出片尺寸不对: $w"
+else bad "rec-frames --act 失败"; sed -n '1,15p' /tmp/av-rc.log; fi
+rm -rf "$RC"
+fi
+
 # ---------------------------------------------------------------- 3.35
 if [ "$SKIP_RENDER" = 1 ]; then
   sec "产品录屏工具（已跳过 --skip-render）"
