@@ -1,28 +1,20 @@
-# PROGRESS — 循环任务路线图
+# PROGRESS — 建设记录
 
-每小时一轮，一轮聚焦一个主题做透，做完自测 → push → 报结果。
-**下一轮开工先读这个文件，取第一个未打勾的条目。**
+**这份文件是历史，不是现状。** 想知道现在能干什么、还差什么，读 `README.md`。
+留着它是因为里面每一条「自测记录」都写了**当时是怎么发现问题的** ——
+下一个 agent 与其重走一遍弯路，不如先看别人在哪儿摔过。
 
-## 完成条件 —— ✅ 全部满足（2026-08-10，循环已停）
+## 现状（2026-08-12 定稿）
 
-- [x] 规划中的所有子 skill 都完成「深度展开」—— **13 个 skill**
-- [x] `tests/validate.sh` 全绿（一致性 / 语法 / 4 个 linter / 端到端渲染 / 零 key 冒烟）
-- [x] 零 context agent 冒烟测试通过 —— 干净克隆 + 零 API key 走到 `AUDIT PASS`，
-      并已固化为 `validate.sh` 里的常驻断言
-- [x] 已推送到 `origin main`
-- [x] `SECRETS-CHECKLIST.md` 已交付给人类
+13 个 skill · 31 个 lib 脚本 · 5 套卡模板 · 2 篇 references ·
+2 个零 key 可跑样例 · `tests/validate.sh` **123 条断言**（`--skip-render` 51 条）。
 
-**最终规模**：13 个 skill · 23 个 lib 脚本 · 5 套卡模板 · 2 篇 references ·
-1 个零 key 可跑样例 · validate 里 40+ 条断言。
+完成条件全部满足：子 skill 齐全 / validate 全绿 / 零 context agent 干净克隆无 key
+走到 `AUDIT PASS` / 已推送 / `SECRETS-CHECKLIST.md` 已交付。
 
-### 还没验证的部分（诚实留档，拿到条件后要补）
-
-- `gen-voice.mjs` 没跑过真实 MiniMax API（缺 key）
-- `rec-page.js` / `render-card.js` 只过语法，没跑过真实站点（缺凭据 + 目标站）
-- 语速表只实测了 2 个音色（克隆音 @1.10 = 4.98、`presenter_male` @1.30 = 6.35），
-  `female-tianmei` / `female-shaonv` 还没量过
-
-补测之后把实测值回填进 `skills/topic-and-script/` 的语速表和 `skills/tts-voiceover/`。
+**还没验证的只剩一项**：克隆音（`voice_id` 私有）没测过，只测了三个系统音色。
+其余都在真实条件下跑过 —— 真 MiniMax 接口、真产品站点登录录屏、真素材、真交付回测。
+最新的一份诚实清单以 `README.md` 末节为准（那里会跟着改，这里不会）。
 
 ---
 
@@ -130,6 +122,37 @@
 - [x] 把 Run 3–7 踩的新坑回填进 `vertical-shortform` 的失败症状表
 
 ---
+
+### ✅ Run 9 — 逻辑链 / 人味儿 / 真 demo（2026-08-10～11）
+
+- [x] 文案先写**逻辑链**再填字（三道 linter 全绿也可能是流水账，
+      机器查不了「这句接不接得住上一句」）→ `topic-and-script` §5.5
+- [x] `lib/check-humanness.py` 人味儿闸门；`lib/rec-frames.js` 高像素录屏
+      （布局用窄 viewport，像素用 dsf）；`lib/motion.sh` 五种镜头运动
+- [x] README 放真 mp4 demo（走 jsDelivr，`raw.githubusercontent` 的
+      `application/octet-stream` 播不了）
+
+### ✅ Run 10 — 转场 + 光标（2026-08-11）
+
+- [x] 转场：默认 `fade`，落在上一拍句末的 GAP 静音里 —— 总长不变、每句开口那一帧
+      和硬切版一致、音频不用交叉淡化。shots.tsv 第 7 列逐拍指定
+- [x] 光标：`lib/cursor-overlay.js` + `lib/actor.js`，动作表按**帧**驱动
+      （逐帧截图的墙上间隔不均匀，CSS 动画会忽快忽慢）
+- [x] **顺带挖出音画逐拍漂移**：每拍 `-t` 向上取整到整帧，concat 起来累加，
+      真片子末拍画面晚 171ms 且全程无报错。改成按绝对边界取整，降到 17ms（半帧）
+- [x] `tests/transitions-test.sh` + `tests/cursor-test.js`，自检 85 → 116 条
+
+### ✅ Run 11 — 光标进片子 + 整片运镜检查（2026-08-12）
+
+- [x] 重录素材：真站点登录 + `--cursor` + `--act`，手指点大运/流年，命盘跟着多出一列
+      —— 之前工具做了但 demo 用的是老素材，等于没做
+- [x] `lib/check-motion.py`：**整片**镜头检查（起手位置 / 方向分布 / 推拉配比 /
+      有没有拍其实没动）。调 `motion.sh --dry-run` 拿真实框，不重写算法。
+      拿旧 demo 自测，一次抓出「8 拍里 6 拍从全屏起手」
+- [x] `motion.sh --lead`：转场多渲的那 0.233s 不许把镜头路径时序带偏
+- [x] 转场时长取整到帧（0.22s @30fps = 6.6 帧，源会被采样在两帧之间）
+- [x] **想让录屏字更大该调视口不是裁**：输出和源都是 9:16，裁框必然是竖长条，
+      硬裁正文会切字。视口 720→440 让浏览器重排，同一段字占画幅大 1.6 倍
 
 ## 每轮自测结论
 

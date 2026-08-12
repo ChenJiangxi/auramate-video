@@ -347,7 +347,7 @@ if [ "$SKIP_RENDER" = 1 ]; then
 else
 sec "卡模板 / storyboard"
 SX="$ROOT/tests/fixtures/storyboard"
-rm -rf "$SX/work" "$SX/html" "$SX/shots.tsv"
+rm -rf "$SX/work" "$SX/html" "$SX/shots.tsv" "$SX/one.webm" "$SX/one.png"
 # 每个模板都要能被 storyboard.json 引到（防模板改名后 fixture 失联）
 missing=""
 for t in $(/usr/bin/env python3 -c '
@@ -376,11 +376,26 @@ if node -e "require('playwright')" 2>/dev/null; then
     done
     [ "$n" = 5 ] && [ "$okn" = 5 ] && ok "5 张卡全部渲成 1080×1920 且不短于请求时长" \
       || bad "渲染结果 $okn/$n 合格"
+    # 单张卡渲染（storyboard 走的是批量路径，这条脚本单独跑一遍才算被覆盖）
+    ONE=$(ls "$SX"/work/cards/*.html 2>/dev/null | head -1)
+    if [ -n "$ONE" ]; then
+      if node "$ROOT/lib/render-card.js" --html "$ONE" --out "$SX/one.webm" --duration 2 >/tmp/av-rc1.log 2>&1 \
+         && node "$ROOT/lib/render-card.js" --html "$ONE" --out "$SX/one.png" --png >/tmp/av-rc2.log 2>&1; then
+        cw=$(ffprobe -v error -select_streams v:0 -show_entries stream=width -of csv=p=0 "$SX/one.webm")
+        cd_=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$SX/one.webm")
+        pw=$(/usr/bin/python3 -c "from PIL import Image;print(Image.open('$SX/one.png').size[0])" 2>/dev/null)
+        [ "$cw" = 1080 ] && awk -v d="$cd_" 'BEGIN{exit !(d>=2.0)}' \
+          && ok "render-card 单张：webm ${cw}px / ${cd_}s（不短于请求）" \
+          || bad "render-card webm 不合格：${cw}px / ${cd_}s"
+        [ "${pw:-0}" -ge 1080 ] && ok "render-card --png 出图 ${pw}px（dsf 生效）" \
+          || bad "render-card --png 出图宽 ${pw}"
+      else bad "render-card 失败"; sed -n '1,8p' /tmp/av-rc1.log /tmp/av-rc2.log; fi
+    else bad "找不到已填充的卡 HTML，render-card 没测到"; fi
   else bad "storyboard 渲染失败"; sed -n '1,12p' /tmp/av-sb1.log; fi
 else
   printf '  ○ 跳过真实渲染（本机没有 playwright）\n'
 fi
-rm -rf "$SX/work" "$SX/html" "$SX/shots.tsv"
+rm -rf "$SX/work" "$SX/html" "$SX/shots.tsv" "$SX/one.webm" "$SX/one.png"
 fi
 
 # ---------------------------------------------------------------- 3.38

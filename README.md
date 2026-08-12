@@ -275,19 +275,21 @@ CSS 字号一个像素没变。**裁切是取景手段，不是放大手段。**
 
 ## 还没验证的部分（诚实留档）
 
-- 克隆音（`voice_id` 私有）没测过，只测了三个系统音色。
-- `lib/render-card.js`（单张卡渲染）没单独跑过；不过同一条链路的
-  `lib/storyboard.js` 每次 `validate.sh` 都会真渲 5 张卡。
+**只剩一条：克隆音（`voice_id` 私有）没测过**，只实测了三个系统音色的语速。
+拿到能用的 `voice_id` 之后，量完把值回填进 `skills/topic-and-script/` 的语速表。
 
-`lib/rec-page.js` 已在真实站点上验过：登录 → 录屏 → 输出 720×1280 / 15.2s 的产品界面
-（密码只走环境变量注入，不进 argv 和日志）。
+已经在真实条件下验过的：
 
-`lib/gen-voice.mjs` 已在真实 MiniMax 接口上跑通（国际区，`presenter_male` /
-`female-tianmei` / `female-shaonv` 三个音色都出音），上面 demo 的配音就是这么生成的。
+| 这件事 | 怎么验的 |
+|---|---|
+| 真配音 | `lib/gen-voice.mjs` 打真 MiniMax 接口（国际区），`presenter_male` / `female-tianmei` / `female-shaonv` 都出音，README 上那条 demo 的配音就是它生成的 |
+| 产品录屏 | `lib/rec-page.js` 和 `lib/rec-frames.js` 都登过真站点录过真界面；密码只走环境变量，不进 argv 和日志 |
+| 光标 + 动作表 | 在真站点上点大运、点流年，命盘跟着多出一列 —— 就是 demo 里那几拍 |
+| 单张卡渲染 | `lib/render-card.js` webm / `--png` 两种模式都进了 `validate.sh` 常驻断言 |
+| 零 context 跑通 | 干净 `git clone` + 零 API key，从建工程走到 `AUDIT PASS`，已固化成常驻断言 |
+| 其余 | 竖版化、裁切放大、镜头运动、转场、浏览器壳、卡模板、字幕、审计、交付 —— 都在真实素材上跑过并抽帧目视确认 |
+
 key 走环境变量，repo 里只有占位符 —— 见 `SECRETS-CHECKLIST.md`。
-
-其余部分——竖版化、裁切放大、浏览器壳、卡模板、字幕、审计、交付——
-都在真实素材上跑过并抽帧目视确认过。
 
 ---
 
