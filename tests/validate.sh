@@ -271,6 +271,10 @@ sec "光标可视化 + 动作表"
 node "$ROOT/tests/cursor-test.js" >/tmp/av-cursor.log 2>&1 || fail=1
 cat /tmp/av-cursor.log
 grep -q '✗' /tmp/av-cursor.log && fail=1
+# 强调层：暗场 / 高亮框 / 记号笔 / 标注气泡（光标说明「有人在操作」，强调说明「该看哪」）
+node "$ROOT/tests/highlight-test.js" >/tmp/av-hl.log 2>&1 || fail=1
+cat /tmp/av-hl.log
+grep -q '✗' /tmp/av-hl.log && fail=1
 # 端到端：rec-frames.js --cursor --act 真能出片（上面测的是模块，这里测 CLI 接线）
 RC="$ROOT/tests/fixtures/pcur"; rm -rf "$RC"; mkdir -p "$RC"
 if node "$ROOT/lib/rec-frames.js" --url "file://$ROOT/tests/fixtures/page/index.html" \
@@ -278,9 +282,19 @@ if node "$ROOT/lib/rec-frames.js" --url "file://$ROOT/tests/fixtures/page/index.
      --act "$ROOT/tests/fixtures/page/actions.json" >/tmp/av-rc.log 2>&1; then
   grep -q '光标 touch' /tmp/av-rc.log \
     && ok "给了 --act 会自动开光标（不然页面像自己在动）" || bad "--act 没有自动开光标"
+  grep -q '强调 [0-9]* 处' /tmp/av-rc.log \
+    && ok "动作表里的强调被 CLI 认出来了" || bad "CLI 没识别动作表里的强调"
   w=$(ffprobe -v error -select_streams v:0 -show_entries stream=width -of csv=p=0 "$RC/act.mp4")
   [ "$w" = 720 ] && ok "rec-frames --cursor --act 出片 ${w}px" || bad "录屏出片尺寸不对: $w"
 else bad "rec-frames --act 失败"; sed -n '1,15p' /tmp/av-rc.log; fi
+# --no-cursor 只收手指，强调层必须还在（两者共用一个叠加层，早期一关就全没了）
+if node "$ROOT/lib/rec-frames.js" --url "file://$ROOT/tests/fixtures/page/index.html" \
+     --out "$RC/nc.mp4" --w 720 --h 1280 --dsf 1 --fps 8 --secs 2 --no-cursor \
+     --act "$ROOT/tests/fixtures/page/actions.json" >/tmp/av-nc.log 2>&1; then
+  grep -q '光标 touch' /tmp/av-nc.log && bad "--no-cursor 却还画了手指" \
+    || ok "--no-cursor 收起手指"
+  [ -f "$RC/nc.mp4" ] && ok "--no-cursor + 强调仍然出片" || bad "--no-cursor 没出片"
+else bad "rec-frames --no-cursor --act 失败"; sed -n '1,15p' /tmp/av-nc.log; fi
 rm -rf "$RC"
 fi
 

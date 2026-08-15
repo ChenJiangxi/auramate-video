@@ -1,8 +1,12 @@
 [
   { "at": 0.3, "do": "tap",   "to": "#bd" },
+  { "at": 0.6, "do": "ring",  "to": "#bd", "hold": 1.2 },
   { "at": 1.0, "do": "type",  "text": "1995-08-11 07:30", "over": 1.1 },
   { "at": 2.4, "do": "tap",   "to": "#go" },
+  { "at": 2.6, "do": "spot",  "to": "#grid", "hold": 1.4 },
+  { "at": 2.8, "do": "label", "to": "#grid", "text": "真太阳时 19:30", "hold": 1.2 },
   { "at": 3.4, "do": "move",  "to": "#grid", "over": 0.6 },
+  { "at": 4.2, "do": "clear" },
   { "at": 4.4, "do": "wheel", "dy": 520, "over": 1.4 },
   { "at": 6.0, "do": "hide" }
 ]

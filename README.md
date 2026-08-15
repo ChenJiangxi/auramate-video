@@ -46,8 +46,16 @@
 
 **光标是画上去的** —— 截图不含系统光标。视频里那根手指点大运、点流年，
 命盘跟着多出一列，都是 `--act` 动作表按帧驱动的真实点击。
+同一张动作表还负责**指出该看哪**：暗场聚光 / 高亮框 / 记号笔 / 标注气泡，
+旁白说到哪个字段，画面上就把哪个字段挑出来。
 
 ![转场](docs/demo/demo.gif)
+
+![强调层](docs/demo/highlight.gif)
+
+**强调层实拍**（auramate.net 真站点 · 桌面 1440×900 · `--desktop`）：
+暗场聚光 → 高亮框 + 标注气泡 → 记号笔 → 输入框高亮，全程箭头光标。
+框每帧重新量目标位置，页面滚了框跟着走。
 
 ### 九个反直觉的结论（都是被打回、或者被量出来推翻的）
 
@@ -77,9 +85,12 @@
 让它结束在下一句开口的那一刻：总长不变，每句开口那一帧和硬切版一模一样，
 音频也不用做交叉淡化。推导见 `skills/ffmpeg-cookbook/`「转场」。
 
-**七、录屏里没有光标。** 截图和 `recordVideo` 都不含系统光标。不自己画一个，
+**七、录屏里没有光标，也没人指路。** 截图和 `recordVideo` 都不含系统光标。不自己画一个，
 出来就是页面自己在动、输入框自己在填字，读起来像 bug 演示。
-光标的动画还必须**按帧**推进 —— 逐帧截图的墙上间隔不均匀（一帧 100–300ms 还会抖），
+但光标只说明「有人在操作」，不说明「该看哪」—— 一屏几十个元素，旁白正在说的那一个，
+观众得自己找。所以动作表里还有 `spot`（暗场聚光）/ `ring`（高亮框）/ `mark`（记号笔）/
+`label`（标注气泡），且**每帧重新量目标位置**，页面滚了框跟着走。
+两者的动画都必须**按帧**推进 —— 逐帧截图的墙上间隔不均匀（一帧 100–300ms 还会抖），
 用 CSS 动画的话水波纹在成片里会忽快忽慢。见 `lib/rec-frames.js --cursor --act`。
 
 **八、想让录屏里的字更大，调视口，别裁。** 输出和源都是 9:16，
@@ -200,7 +211,7 @@ CSS 字号一个像素没变。**裁切是取景手段，不是放大手段。**
 | **想选题 / 写口播稿** | `skills/topic-and-script/`（角度库 + 钩子句式 + 实测语速 + 人味儿关） |
 | **确认这题材能不能做** | `skills/compliance-redlines/`（先过这关，再谈别的） |
 | **扒外部真实素材** | `skills/real-clip-mashup/` → `lib/fetch-clip.sh` → `lib/fit-vertical.sh` |
-| **录自家产品界面** | `skills/product-demo/` → `lib/rec-frames.js`（高像素 + 光标 + 动作表）→ `lib/motion.sh`（推拉）→ `lib/wrap-chrome.sh` |
+| **录自家产品界面** | `skills/product-demo/` → `lib/rec-frames.js`（高像素 + 光标 + 动作表 + 强调）→ `lib/motion.sh`（推拉）→ `lib/wrap-chrome.sh` |
 | **做大字卡 / 数据榜** | `skills/html-motion-cards/` → `lib/storyboard.js` |
 | **配音** | `skills/tts-voiceover/` → `lib/gen-voice.mjs` |
 | **加字幕** | `skills/subtitles/` → `lib/gen-subs.py` + `lib/burn-subs.sh` |
@@ -222,7 +233,7 @@ CSS 字号一个像素没变。**裁切是取景手段，不是放大手段。**
 | `skills/topic-and-script/` | **选题与脚本**。决定 80% 的那一环：角度库、钩子句式、实测语速、文案模板 |
 | `skills/vertical-shortform/` | 竖版短视频（抖音 / 小红书，1080×1920，40–60s）完整管线 |
 | `skills/real-clip-mashup/` | 真人切片混剪：yt-dlp 扒真实素材 → 竖版化 → 混剪 |
-| `skills/product-demo/` | 产品录屏演示：素材盘点 → 录屏（含可见光标 + 动作表）→ 裁切放大 → 假浏览器壳 |
+| `skills/product-demo/` | 产品录屏演示：素材盘点 → 录屏（含可见光标 + 动作表 + 强调层）→ 裁切放大 → 假浏览器壳 |
 | `skills/html-motion-cards/` | HTML/CSS 动效卡：5 套模板 + 公共设计系统 + storyboard 驱动渲染 |
 | `skills/tts-voiceover/` | 配音：MiniMax T2A v2、克隆音 / 系统音色、语速、读音坑 |
 | `skills/subtitles/` | 字幕：PIL overlay（无 libass 环境）+ ASS 两条路 |
@@ -233,7 +244,7 @@ CSS 字号一个像素没变。**裁切是取景手段，不是放大手段。**
 | `lib/` | 可直接跑的脚本（扒素材 / 竖版化 / build / 配音 / 字幕 / 封面 / 合规 / 审计 / 交付） |
 | `references/` | 长文参考：零 context 走查、B 站横版长视频、平台文案模板 |
 | `examples/` | 两个可跑样例（`hello-vertical` 最小链路 / `demo-vertical` 卡模板预览），都不需要 API key |
-| `tests/validate.sh` | 自检：一致性、frontmatter、死链、4 个 linter、转场时间轴、光标与动作表、端到端渲染、零 key 冒烟 |
+| `tests/validate.sh` | 自检：一致性、frontmatter、死链、4 个 linter、转场时间轴、光标与动作表、强调层、端到端渲染、零 key 冒烟 |
 | `tests/check-consistency.py` | 一致性：孤儿脚本 / 路由完整 / README 覆盖 / **旧说法不许复活** |
 | `setup.sh` | 装依赖并按**能力**汇报（剪辑 / 字幕 / 配音 / 录屏 / 扒素材 各自行不行） |
 | `install.sh` | 接到 agent 上：`claude`（.claude/skills）/ `codex`（AGENTS.md）/ `bundle`（单文件） |
@@ -285,6 +296,7 @@ CSS 字号一个像素没变。**裁切是取景手段，不是放大手段。**
 | 真配音 | `lib/gen-voice.mjs` 打真 MiniMax 接口（国际区），`presenter_male` / `female-tianmei` / `female-shaonv` 都出音，README 上那条 demo 的配音就是它生成的 |
 | 产品录屏 | `lib/rec-page.js` 和 `lib/rec-frames.js` 都登过真站点录过真界面；密码只走环境变量，不进 argv 和日志 |
 | 光标 + 动作表 | 在真站点上点大运、点流年，命盘跟着多出一列 —— 就是 demo 里那几拍 |
+| 强调层 | 旁白说到哪个字段，画面就把它挑出来：暗场聚光 / 高亮框 / 记号笔 / 标注气泡 |
 | 单张卡渲染 | `lib/render-card.js` webm / `--png` 两种模式都进了 `validate.sh` 常驻断言 |
 | 零 context 跑通 | 干净 `git clone` + 零 API key，从建工程走到 `AUDIT PASS`，已固化成常驻断言 |
 | 其余 | 竖版化、裁切放大、镜头运动、转场、浏览器壳、卡模板、字幕、审计、交付 —— 都在真实素材上跑过并抽帧目视确认 |
