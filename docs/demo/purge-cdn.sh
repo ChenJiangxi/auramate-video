@@ -7,7 +7,7 @@
 set -euo pipefail
 REPO="${REPO:-ChenJiangxi/auramate-video}"
 BRANCH="${BRANCH:-main}"
-FILES="${*:-docs/demo/demo.mp4 docs/demo/demo.gif docs/demo/storyboard.png docs/demo/poster.jpg}"
+FILES="${*:-docs/demo/demo-16x9.mp4 docs/demo/demo-16x9.gif docs/demo/demo.mp4 docs/demo/demo.gif docs/demo/storyboard.png docs/demo/poster.jpg}"
 for f in $FILES; do
   url="https://purge.jsdelivr.net/gh/${REPO}@${BRANCH}/${f}"
   printf '  %-34s ' "$f"
@@ -15,5 +15,5 @@ for f in $FILES; do
 done
 echo
 echo "验证（应当返回 content-type: video/mp4）:"
-curl -sI -m 30 "https://cdn.jsdelivr.net/gh/${REPO}@${BRANCH}/docs/demo/demo.mp4" \
+curl -sI -m 30 "https://cdn.jsdelivr.net/gh/${REPO}@${BRANCH}/docs/demo/demo-16x9.mp4" \
   | grep -iE "^HTTP|content-type|content-length" | sed 's/^/  /'
