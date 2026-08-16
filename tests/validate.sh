@@ -570,6 +570,13 @@ else
     ok "burn-subs 烧字幕"
   else bad "burn-subs 失败"; sed -n '1,20p' /tmp/av-burn.log; fi
 
+  # 节奏检测：拿造好的成片量一遍，判据本身要跑得通
+  if /usr/bin/python3 "$ROOT/lib/check-rhythm.py" "$EX/hello-nosub.mp4" >/tmp/av-rhy.log 2>&1 \
+     || grep -q 'RHYTHM' /tmp/av-rhy.log; then
+    grep -q '节奏图' /tmp/av-rhy.log && ok "check-rhythm 出节奏图并给判据" \
+      || bad "check-rhythm 没输出节奏图"
+  else bad "check-rhythm 跑挂了"; sed -n '1,15p' /tmp/av-rhy.log; fi
+
   # 标注层：大字 PNG + 两层 manifest 一次压完（字幕在底、标注在中上）
   printf '[{"at":0.2,"dur":1.2,"text":"大字标注"},{"at":2.0,"dur":1.0,"text":"不是字幕\\n是标注"}]' > "$EX/callouts.json"
   if /usr/bin/python3 "$ROOT/lib/gen-callouts.py" --callouts "$EX/callouts.json" --out "$EX/callouts" \

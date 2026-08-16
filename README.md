@@ -220,7 +220,7 @@ CSS 字号一个像素没变。**裁切是取景手段，不是放大手段。**
 | **想选题 / 写口播稿** | `skills/topic-and-script/`（角度库 + 钩子句式 + 实测语速 + 人味儿关） |
 | **确认这题材能不能做** | `skills/compliance-redlines/`（先过这关，再谈别的） |
 | **扒外部真实素材** | `skills/real-clip-mashup/` → `lib/fetch-clip.sh` → `lib/fit-vertical.sh` |
-| **录自家产品界面** | `skills/product-demo/` → `lib/rec-frames.js`（高像素 + 光标 + 动作表 + 强调；16:9 加 `--desktop`）→ `lib/motion.sh`（推拉）→ `lib/wrap-chrome.sh` |
+| **录自家产品界面** | `skills/product-demo/` → `lib/rec-frames.js`（高像素 + 光标 + 动作表 + 强调；16:9 加 `--desktop`）→ `lib/check-rhythm.py`（**录完先量节奏**）→ `lib/motion.sh`（推拉）→ `lib/wrap-chrome.sh` |
 | **做大字卡 / 数据榜** | `skills/html-motion-cards/` → `lib/storyboard.js` |
 | **配音** | `skills/tts-voiceover/` → `lib/gen-voice.mjs` |
 | **加字幕** | `skills/subtitles/` → `lib/gen-subs.py` + `lib/burn-subs.sh` |
