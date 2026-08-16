@@ -9,6 +9,8 @@ examples/*/audio/
 examples/*/footage/
 examples/*/html/
 examples/*/subs/
+examples/*/callouts/
+examples/*/callouts.json
 examples/*/work/
 examples/*/*.mp4
 examples/*/*.webm
