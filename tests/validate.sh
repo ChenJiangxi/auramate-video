@@ -570,6 +570,24 @@ else
     ok "burn-subs 烧字幕"
   else bad "burn-subs 失败"; sed -n '1,20p' /tmp/av-burn.log; fi
 
+  # 标注层：大字 PNG + 两层 manifest 一次压完（字幕在底、标注在中上）
+  printf '[{"at":0.2,"dur":1.2,"text":"大字标注"},{"at":2.0,"dur":1.0,"text":"不是字幕\\n是标注"}]' > "$EX/callouts.json"
+  if /usr/bin/python3 "$ROOT/lib/gen-callouts.py" --callouts "$EX/callouts.json" --out "$EX/callouts" \
+       --w 1080 --h 1920 >/tmp/av-callout.log 2>&1; then
+    n=$(wc -l < "$EX/callouts/manifest.tsv" | tr -d ' ')
+    [ "$n" = 2 ] && ok "gen-callouts 生成 $n 条大字标注" || bad "标注条数不对: $n"
+  else bad "gen-callouts 失败"; sed -n '1,20p' /tmp/av-callout.log; fi
+
+  if "$ROOT/lib/burn-subs.sh" "$EX/hello-nosub.mp4" "$EX/hello-v2.mp4" \
+       --manifest "$EX/subs/manifest.tsv" --manifest "$EX/callouts/manifest.tsv" >/tmp/av-burn2.log 2>&1; then
+    grep -q '2 层' /tmp/av-burn2.log && ok "burn-subs 一次压两层（字幕 + 标注）" \
+      || bad "--manifest 给两次却没按两层处理"
+    a=$(ffprobe -v error -show_entries format=size -of csv=p=0 "$EX/hello-v1.mp4")
+    b=$(ffprobe -v error -show_entries format=size -of csv=p=0 "$EX/hello-v2.mp4")
+    [ "$a" != "$b" ] && ok "两层版和只有字幕版产物不同（标注确实烧上了）" \
+      || bad "加了标注层但产物没变"
+  else bad "burn-subs 两层失败"; sed -n '1,20p' /tmp/av-burn2.log; fi
+
   if [ -f "$EX/hello-v1.mp4" ]; then
     if "$ROOT/lib/verify-output.sh" "$EX/hello-v1.mp4" --expect-w 1080 --expect-h 1920 --fps 30 --min-dur 5 --max-dur 60 >/tmp/av-verify.log 2>&1; then
       ok "verify-output 全绿：$(grep -E '^  [0-9]+x' /tmp/av-verify.log | head -1 | sed 's/^ *//')"

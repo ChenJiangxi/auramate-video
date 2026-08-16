@@ -224,6 +224,7 @@ CSS 字号一个像素没变。**裁切是取景手段，不是放大手段。**
 | **做大字卡 / 数据榜** | `skills/html-motion-cards/` → `lib/storyboard.js` |
 | **配音** | `skills/tts-voiceover/` → `lib/gen-voice.mjs` |
 | **加字幕** | `skills/subtitles/` → `lib/gen-subs.py` + `lib/burn-subs.sh` |
+| **加大字标注**（抖音那种红字） | `references/douyin-case-formsight.md` → `lib/gen-callouts.py` → `burn-subs.sh --manifest 字幕 --manifest 标注` |
 | **出封面** | `skills/cover-thumbnail/` → `lib/make-cover.py` |
 | **ffmpeg 参数记不清** | `skills/ffmpeg-cookbook/`（配方 + 报错速查） |
 | **交付前自审** | `skills/quality-gate/` → `lib/audit-video.sh` |
@@ -251,7 +252,7 @@ CSS 字号一个像素没变。**裁切是取景手段，不是放大手段。**
 | `skills/delivery/` | 交付：唯一文件名 + zip + 故事板图 + faststart |
 | `skills/ffmpeg-cookbook/` | ffmpeg 配方库：竖版化、zoompan、concat、**转场（不动时间轴的推导）**、mux、探测 |
 | `lib/` | 可直接跑的脚本（扒素材 / 竖版化 / build / 配音 / 字幕 / 封面 / 合规 / 审计 / 交付） |
-| `references/` | 长文参考：零 context 走查、B 站横版长视频、平台文案模板 |
+| `references/` | 长文参考：零 context 走查、B 站横版长视频、平台文案模板、**同赛道爆款拆解** |
 | `examples/` | 两个可跑样例（`hello-vertical` 最小链路 / `demo-vertical` 卡模板预览），都不需要 API key |
 | `tests/validate.sh` | 自检：一致性、frontmatter、死链、4 个 linter、转场时间轴、光标与动作表、强调层、端到端渲染、零 key 冒烟 |
 | `tests/check-consistency.py` | 一致性：孤儿脚本 / 路由完整 / README 覆盖 / **旧说法不许复活** |
