@@ -320,7 +320,9 @@ node lib/rec-frames.js --url <URL> --out footage/rec/x.mp4 \
 不是参数错，是**拿"报告页的节奏"去套"对话型产品"**，根上就不对。
 
 ```bash
-/usr/bin/python3 lib/check-rhythm.py footage/rec/x.mp4      # 录完先量一遍，别靠感觉
+/usr/bin/python3 lib/check-rhythm.py footage/rec/x.mp4                 # 报告页/落地页（滚动型）
+/usr/bin/python3 lib/check-rhythm.py footage/rec/x.mp4 --mode event    # 对话/表单型
+/usr/bin/python3 lib/check-rhythm.py footage/rec/x.mp4 --still 2.0     # 页面有常驻动画时调高
 ```
 
 它把每一秒画面变了多少摊成条形图，卡四件事：开头有没有定住 / 动静占比 /

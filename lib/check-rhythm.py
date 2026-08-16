@@ -26,6 +26,10 @@
 
     --still  变化像素占比低于这个百分数就算"静止"（默认 1.2%）
 
+⚠ 页面有明显常驻动画（落地页的星点漂移、旋转圆环、循环入场）时，把 --still 调高：
+   实测灵伴落地页要 `--still 2.0`，否则那点底噪会被当成"你在推着观众走"。
+   判断方法：看节奏图里"什么都没操作"的那几秒是多少，把阈值定在它上面一点。
+
 退出码：有硬问题返回 1，只有提示返回 0。
 """
 import argparse
@@ -133,7 +137,16 @@ if head_still:
     ok(f'开头 {head}s 定住了（观众来得及认出画面）')
 else:
     first_move = next((i for i, m in enumerate(moving) if m), 0)
-    no(f'开头只定住了 {first_move}s，不够 {head}s —— 观众还没看清画面就被推走了')
+    # 入场动画（页面自己在渐显、元素飞入）和"被推走"不是一回事：
+    # 前者是**衰减**的（越来越静），后者是持续的。落地页几乎都有入场动画，
+    # 一律判失败会天天误报。
+    seg = per_sec[:head + 1]
+    settling = len(seg) >= 3 and seg[-1] < seg[0] * 0.6
+    if settling:
+        tip(f'开头 {first_move}s 就有动静，但强度在衰减（{seg[0]:.1f} → {seg[-1]:.1f}）——'
+            f' 像页面自己的入场动画，不算把观众推走。确认一下不是你自己在滚')
+    else:
+        no(f'开头只定住了 {first_move}s，不够 {head}s —— 观众还没看清画面就被推走了')
 
 frac = sum(moving) / max(1, len(moving))
 if A.mode == 'scroll':
