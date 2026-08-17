@@ -52,7 +52,10 @@ presenter_male @1.30（6.35 字/秒·含标点）：  45s ≈ 285 字   60s ≈ 
 | 上面几种混合（**最常见**） | `skills/vertical-shortform/` | 90% 的竖版短视频 |
 | 横版长视频（B 站 4–8 分钟） | `skills/vertical-shortform/` + `references/bilibili-longform.md` | 讲论文、讲架构、系列片 |
 
-命理 / 玄学 / 算命题材**无论走哪条**，先过 `skills/compliance-redlines/`。
+命理 / 玄学 / 算命题材**无论走哪条**：
+1. 先过 `skills/mingli-content/` —— 选题四层结构、三条价值观内核、论据取证纪律、
+   命理特有的画面语言（五行入排版/真盘/代码页），以及这一系列踩过的坑。
+2. 再过 `skills/compliance-redlines/`。
 
 **默认路径**：`skills/vertical-shortform/` 是主干，它会在需要时把你转到 `real-clip-mashup` /
 `product-demo` / `html-motion-cards` 取素材，再回到主干做配音、字幕、合成、封面、交付。
