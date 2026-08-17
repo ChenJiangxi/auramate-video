@@ -225,6 +225,7 @@ CSS 字号一个像素没变。**裁切是取景手段，不是放大手段。**
 | **配音** | `skills/tts-voiceover/` → `lib/gen-voice.mjs` |
 | **加字幕** | `skills/subtitles/` → `lib/gen-subs.py` + `lib/burn-subs.sh` |
 | **加大字标注**（抖音那种红字） | `references/douyin-case-formsight.md` → `lib/gen-callouts.py` → `burn-subs.sh --manifest 字幕 --manifest 标注` |
+| **做产品展示片**（竖版放桌面录屏） | `references/douyin-case-zhishi.md` → `skills/product-demo/` 二·9（近远交替机位）→ `lib/check-rhythm.py` |
 | **出封面** | `skills/cover-thumbnail/` → `lib/make-cover.py` |
 | **ffmpeg 参数记不清** | `skills/ffmpeg-cookbook/`（配方 + 报错速查） |
 | **交付前自审** | `skills/quality-gate/` → `lib/audit-video.sh` |
